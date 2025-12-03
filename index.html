@@ -24,32 +24,11 @@
     .resto-card h3{margin:15px 0 10px;color:var(--bleu);}
     .panier{position:fixed;bottom:20px;right:20px;background:var(--bleu);color:white;padding:15px 25px;border-radius:50px;box-shadow:0 10px 30px rgba(0,0,0,0.4);cursor:pointer;z-index:999;font-weight:bold;display:flex;align-items:center;gap:12px;transition:0.3s;}
     .panier:hover{background:#002244;transform:scale(1.05);}
-    .panier span
-    #toast {
-  position: fixed;
-  bottom: 30px;
-  right: 20px;
-  background: var(--bleu);
-  color: white;
-  padding: 15px 25px;
-  border-radius: 10px;
-  z-index: 2000;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity .4s, transform .4s;
-  font-size: 1.1rem;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-    {
-  background: var(--jaune);
-  color: var(--bleu);
-  border-radius: 50%;
-  padding: 6px 12px;
-  font-weight: bold;
-    }
+    .panier span{background:var(--jaune);color:var(--bleu);border-radius:50%;padding:6px 12px;font-weight:bold;}
     #toast{position:fixed;bottom:90px;right:20px;background:#333;color:white;padding:15px 25px;border-radius:10px;z-index:1000;opacity:0;transition:opacity 0.4s;font-size:1rem;box-shadow:0 5px 15px rgba(0,0,0,0.3);}
     #toast.show{opacity:1;}
     .vider-btn{background:var(--rouge);color:white;padding:12px 25px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;font-size:1rem;}
+    .menu-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
   </style>
 </head>
 <body>
@@ -67,32 +46,36 @@
     <div class="grid" id="restoGrid"></div>
   </section>
 
-  <div class="panier" onclick="openPanier()">
-    Panier <span id="panierCount">0</span>
-  </div>
-
+  <div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
   <div id="toast"></div>
 
-  <footer>
-    <p>Livré Magog © 2025 • Livraison rapide à Magog & environs</p>
-  </footer>
+  <footer><p>Livré Magog © 2025</p></footer>
 
 <script>
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 
-const restaurants = [{nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},{nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},{nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"},{nom:"Café Saint-Michel",img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800",id:"cafe"},{nom:"Fondissimo",img:"https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800",id:"fondue"},{nom:"Microbrasserie La Memphré",img:"https://images.unsplash.com/photo-1563379926897-7c560b7a0e6e?w=800",id:"micro"},{nom:"Bistro",img:"https://images.unsplash.com/photo-1517247457457-40d71bcdd2085?w=800",id:"bistro"},{nom:"Sushi Magog",img:"https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",id:"sushi"}];
+const restaurants = [
+  {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
+  {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
+  {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
+];
 
-const menuCanton = [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99},{nom:"Salade César poulet",prix:16.99},{nom:"Nachos supérieurs",prix:17.99}];
+const menuCanton = [
+  {nom:"Poutine classique",prix:14.99},
+  {nom:"Burger Canton",prix:18.99},
+  {nom:"Fish & Chips",prix:19.99}
+];
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg + " ✅";
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
 function updatePanierCount() {
-  document.getElementById('panierCount').textContent = panier.length;
+  const count = document.getElementById('panierCount');
+  if (count) count.textContent = panier.length;
 }
 
 function addToCart(nom, prix) {
@@ -107,34 +90,21 @@ function clearPanier() {
   localStorage.removeItem('panier');
   updatePanierCount();
   showToast("Panier vidé");
-  setTimeout(() => location.href = "/", 800);
-}
-
-function renderRestos() {
-  const grid = document.getElementById('restoGrid');
-  grid.innerHTML = '';
-  restaurants.forEach(r => {
-    const card = document.createElement('div');
-    card.className = 'resto-card';
-    card.innerHTML = `<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}','${r.nom}')">Voir le menu</button>`;
-    grid.appendChild(card);
-  });
+  setTimeout(() => location.reload(), 800);
 }
 
 function openMenu(id, nom) {
-  if (id !== "canton") { alert("Menu en construction – reviens bientôt !"); return; }
+  if (id !== "canton") { alert("Menu en construction !"); return; }
   let html = `<h2 style="text-align:center;color:var(--bleu);margin:20px;">${nom}</h2><div style="max-width:600px;margin:0 auto;">`;
   menuCanton.forEach(item => {
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+    html += `<div class="menu-item">
       <span style="flex:1;">${item.nom}</span>
       <span>${item.prix.toFixed(2)} $</span>
       <button onclick="addToCart('${item.nom}',${item.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-weight:bold;font-size:1.2rem;">+</button>
     </div>`;
   });
-  html += `</div><div style="text-align:center;margin:40px 20px;">
-    <button class="btn" onclick="openPanier()">Voir le panier</button>
-  </div>`;
-  document.body.innerHTML = `<header><h1>Livré Magog</h1></header>${html}<footer><p><a href="/" style="color:white;">Retour à l'accueil</a></p></footer>`;
+  html += `</div><div style="text-align:center;margin:40px;"><button class="btn" onclick="openPanier()">Voir le panier</button></div>`;
+  document.body.innerHTML = `<header><h1>Livré Magog</h1></header>${html}<footer><p><a href="/" style="color:white;">Retour</a></p></footer>`;
   updatePanierCount();
 }
 
@@ -143,45 +113,26 @@ function openPanier() {
   let total = panier.reduce((s,i)=>s+i.prix,0) * 1.12 + 3.99;
   let texte = "COMMANDE LIVRÉ MAGOG\n\n";
   panier.forEach(i => texte += `• ${i.nom} – ${i.prix.toFixed(2)} $\n`);
-  texte += `\nSous-total : ${((total-3.99)/1.12).toFixed(2)} $\nTaxes : ${((total-3.99)/1.12*0.12).toFixed(2)} $\nLivraison : 3,99 $\nTOTAL : ${total.toFixed(2)} $\n\nNom, adresse et téléphone ?`;
+  texte += `\nSous-total : ${((total-3.99)/1.12).toFixed(2)} $\nTaxes + Livraison : ${(total - (total-3.99)/1.12).toFixed(2)} $\nTOTAL : ${total.toFixed(2)} $\n\nNom, adresse et téléphone ?`;
 
   let html = `<h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier (${panier.length} articles)</h2><div style="max-width:600px;margin:0 auto;">`;
-  panier.forEach(i => {
-    html += `<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
-      <span>${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
-    </div>`;
-  });
-  html += `<div style="text-align:center;padding:30px 20px;">
+  panier.forEach(i => html += `<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;"><span>${i.nom}</span><span>${i.prix.toFixed(2)} $</span></div>`);
+  html += `<div style="text-align:center;padding:30px;">
     <p style="font-size:1.6rem;font-weight:bold;margin-bottom:20px;">TOTAL : ${total.toFixed(2)} $</p>
-    <button class="vider-btn" onclick="clearPanier()">Vider le panier</button>
-    <br><br>
-    <button class="btn" style="padding:18px 40px;font-size:1.4rem;" onclick="window.open('https://wa.me/18191234567?text=${encodeURIComponent(texte)}','_blank')">Commander via WhatsApp</button>
+    <button class="vider-btn" onclick="clearPanier()">Vider le panier</button><br><br>
+    <button class="btn" style="padding:18px 40px;font-size:1.4rem;" onclick="window.open('https://wa.me/18191234567?text=${encodeURIComponent(texte)}','_blank')">Commander</button>
   </div>`;
   document.body.innerHTML = `<header><h1>Livré Magog</h1></header>${html}<footer><p><a href="/" style="color:white;">Retour</a></p></footer>`;
 }
 
-function showToast(msg) {
-  let t = document.getElementById('toast');
-
-  // Si le toast n'existe plus (body remplacé), on le recrée
-  if (!t) {
-    t = document.createElement("div");
-    t.id = "toast";
-    document.body.appendChild(t);
-  }
-
-  t.textContent = msg;
-  t.classList.add('show');
-
-  setTimeout(() => {
-    t.classList.remove('show');
-  }, 2500);
-}
-  function addToCart(nom, prix) {
-  panier.push({nom, prix});
-  localStorage.setItem('panier', JSON.stringify(panier));
-  updatePanierCount();
-  showToast(`${nom} ajouté au panier ! 🛒`);
+function renderRestos() {
+  const grid = document.getElementById('restoGrid');
+  restaurants.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'resto-card';
+    card.innerHTML = `<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}','${r.nom}')">Voir le menu</button>`;
+    grid.appendChild(card);
+  });
 }
 
 renderRestos();
