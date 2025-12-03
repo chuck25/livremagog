@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Livré Magog – Livraison express à Magog</title>
   <style>
-    :root {--bleu:#003366;--jaune:#ffcc00;--rouge:#d32f2f;}
+    :root{--bleu:#003366;--jaune:#ffcc00;--rouge:#d32f2f;}
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
     body{background:#f8f9fa;color:#333;}
     header{background:var(--bleu);color:white;padding:1rem;text-align:center;position:fixed;width:100%;top:0;z-index:100;}
@@ -24,10 +24,10 @@
     .resto-card h3{margin:15px 0 10px;color:var(--bleu);}
     .panier{position:fixed;bottom:20px;right:20px;background:var(--bleu);color:white;padding:15px 25px;border-radius:50px;box-shadow:0 10px 30px rgba(0,0,0,0.4);cursor:pointer;z-index:999;font-weight:bold;display:flex;align-items:center;gap:12px;transition:0.3s;}
     .panier:hover{background:#002244;transform:scale(1.05);}
-    .panier span{background:var(--jaune);color:var(--bleu);border-radius:50%;padding:6px 12px;font-weight:bold;}
+    .panier span{background:var(--jaune;color:var(--bleu);border-radius:50%;padding:6px 12px;font-weight:bold;}
     #toast{position:fixed;bottom:90px;right:20px;background:#333;color:white;padding:15px 25px;border-radius:10px;z-index:1000;opacity:0;transition:opacity 0.4s;font-size:1rem;box-shadow:0 5px 15px rgba(0,0,0,0.3);}
     #toast.show{opacity:1;}
-    .vider-btn{background:var(--rouge);color:white;padding:10px 20px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;margin-top:20px;}
+    .vider-btn{background:var(--rouge);color:white;padding:12px 25px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;font-size:1rem;}
   </style>
 </head>
 <body>
@@ -56,17 +56,36 @@
   </footer>
 
 <script>
+let panier = JSON.parse(localStorage.getItem('panier')) || [];
+
 const restaurants = [{nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},{nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},{nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"},{nom:"Café Saint-Michel",img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800",id:"cafe"},{nom:"Fondissimo",img:"https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800",id:"fondue"},{nom:"Microbrasserie La Memphré",img:"https://images.unsplash.com/photo-1563379926897-7c560b7a0e6e?w=800",id:"micro"},{nom:"Bistro",img:"https://images.unsplash.com/photo-1517247457457-40d71bcdd2085?w=800",id:"bistro"},{nom:"Sushi Magog",img:"https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",id:"sushi"}];
 
 const menuCanton = [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99},{nom:"Salade César poulet",prix:16.99},{nom:"Nachos supérieurs",prix:17.99}];
-
-let panier = JSON.parse(localStorage.getItem('panier')) || [];
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg + " ✅";
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function updatePanierCount() {
+  document.getElementById('panierCount').textContent = panier.length;
+}
+
+function addToCart(nom, prix) {
+  panier.push({nom, prix});
+  localStorage.setItem('panier', JSON.stringify(panier));
+  updatePanierCount();
+  showToast(`${nom} ajouté au panier`);
+}
+
+function clearPanier() {
+  panier = [];
+  localStorage.removeItem('panier');
+  updatePanierCount();
+  showToast("Panier vidé");
+  setTimeout(() => location.href = "/", 800);
 }
 
 function renderRestos() {
@@ -90,22 +109,11 @@ function openMenu(id, nom) {
       <button onclick="addToCart('${item.nom}',${item.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-weight:bold;font-size:1.2rem;">+</button>
     </div>`;
   });
-  html += `</div><div style="text-align:center;margin:30px;">
+  html += `</div><div style="text-align:center;margin:40px 20px;">
     <button class="btn" onclick="openPanier()">Voir le panier</button>
   </div>`;
   document.body.innerHTML = `<header><h1>Livré Magog</h1></header>${html}<footer><p><a href="/" style="color:white;">Retour à l'accueil</a></p></footer>`;
   updatePanierCount();
-}
-
-function addToCart(nom, prix) {
-  panier.push({nom, prix});
-  localStorage.setItem('panier', JSON.stringify(panier));
-  updatePanierCount();
-  showToast(`${nom} ajouté au panier`);
-}
-
-function updatePanierCount() {
-  document.getElementById('panierCount').textContent = panier.length;
 }
 
 function openPanier() {
@@ -115,28 +123,19 @@ function openPanier() {
   panier.forEach(i => texte += `• ${i.nom} – ${i.prix.toFixed(2)} $\n`);
   texte += `\nSous-total : ${((total-3.99)/1.12).toFixed(2)} $\nTaxes : ${((total-3.99)/1.12*0.12).toFixed(2)} $\nLivraison : 3,99 $\nTOTAL : ${total.toFixed(2)} $\n\nNom, adresse et téléphone ?`;
 
-  // Bouton vider le panier visible dans le panier
-  let html = `<h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier</h2><div style="max-width:600px;margin:0 auto;">`;
-  panier.forEach((i,idx) => {
+  let html = `<h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier (${panier.length} articles)</h2><div style="max-width:600px;margin:0 auto;">`;
+  panier.forEach(i => {
     html += `<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
       <span>${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
     </div>`;
   });
-  html += `<div style="text-align:center;padding:20px;">
-    <p style="font-size:1.4rem;font-weight:bold;">TOTAL : ${total.toFixed(2)} $</p>
+  html += `<div style="text-align:center;padding:30px 20px;">
+    <p style="font-size:1.6rem;font-weight:bold;margin-bottom:20px;">TOTAL : ${total.toFixed(2)} $</p>
     <button class="vider-btn" onclick="clearPanier()">Vider le panier</button>
     <br><br>
-    <button class="btn" onclick="window.open('https://wa.me/18191234567?text=${encodeURIComponent(texte)}','_blank')">Commander via WhatsApp</button>
+    <button class="btn" style="padding:18px 40px;font-size:1.4rem;" onclick="window.open('https://wa.me/18191234567?text=${encodeURIComponent(texte)}','_blank')">Commander via WhatsApp</button>
   </div>`;
   document.body.innerHTML = `<header><h1>Livré Magog</h1></header>${html}<footer><p><a href="/" style="color:white;">Retour</a></p></footer>`;
-}
-
-function clearPanier() {
-  panier = [];
-  localStorage.removeItem('panier');
-  updatePanierCount();
-  alert("Panier vidé !");
-  location.href = "/";
 }
 
 renderRestos();
