@@ -210,33 +210,34 @@ function openMenu(id, nom){
 }
 
 // === PAIEMENT TEST + NOTIFICATION PUSHOVER (TU VAS RECEVOIR LA NOTIF EN 5 SEC) ===
-function ouvrirPaiement(){
+ function ouvrirPaiement(){
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = calculerFraisLivraison(totalHT);
   const totalTTC = (totalHT * 1.12 + livraison).toFixed(2);
 
-  // Paiement test (toujours accepté)
-  alert(`Paiement de ${totalTTC} $ accepté ! Envoi de la notification...`);
+  // Crée le texte de la commande
+  let texte = "NOUVELLE COMMANDE PAYÉE – Livré Magog\n\n";
+  panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
+  texte += `\nSous-total : ${totalHT.toFixed(2)} $\n`;
+  texte += `Taxes : ${(totalHT*0.12).toFixed(2)} $\n`;
+  texte += `Livraison : ${livraison.toFixed(2)} $\n`;
+  texte += `TOTAL : ${totalTTC} $\n\n`;
+  texte += `Heure : ${new Date().toLocaleString('fr-CA')}\n`;
+  texte += `Client : (infos à ajouter plus tard)`;
 
-  // Message Pushover
-  const message = `NOUVELLE COMMANDE PAYÉE – Livré Magog\n\n` +
-    panier.map(i => `${i.quantite||1} × ${i.nom}`).join('\n') +
-    `\n\nTotal : ${totalTTC} $\nHeure : ${new Date().toLocaleTimeString('fr-CA')}`;
+  // Ouvre l’app mail avec tout pré-rempli
+  const sujet = encodeURIComponent("COMMANDE LIVRÉ MAGOG – " + totalTTC + " $");
+  const corps = encodeURIComponent(texte);
 
-  fetch('https://api.pushover.net/1/messages.json', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      token: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7",   // clé que j’ai créée pour toi
-      user: "up1g3xdary8kqh457dj83bvczx1fzu",            // TON USER KEY
-      message: message,
-      sound: "cashregister"
-    })
-  });
+  window.open(`mailto:charles.lep@proton.me?subject=${sujet}&body=${corps}`);
 
-  // Vide le panier et retourne à l'accueil
+  // Message de confirmation
+  alert("Paiement accepté ! Ton app mail s’ouvre avec la commande prête à envoyer.");
+
+  // Vide le panier
   clearPanier();
   renderHome();
+}
 }
 
 
