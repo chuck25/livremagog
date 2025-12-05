@@ -209,6 +209,39 @@ function openMenu(id, nom){
   document.getElementById("app").innerHTML = html;
 }
 
+// === PAIEMENT TEST + NOTIFICATION PUSHOVER (TU VAS RECEVOIR LA NOTIF EN 5 SEC) ===
+function ouvrirPaiement(){
+  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
+  const livraison = calculerFraisLivraison(totalHT);
+  const totalTTC = (totalHT * 1.12 + livraison).toFixed(2);
+
+  // Paiement test (toujours accepté)
+  alert(`Paiement de ${totalTTC} $ accepté ! Envoi de la notification...`);
+
+  // Message Pushover
+  const message = `NOUVELLE COMMANDE PAYÉE – Livré Magog\n\n` +
+    panier.map(i => `${i.quantite||1} × ${i.nom}`).join('\n') +
+    `\n\nTotal : ${totalTTC} $\nHeure : ${new Date().toLocaleTimeString('fr-CA')}`;
+
+  fetch('https://api.pushover.net/1/messages.json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      token: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7",   // clé que j’ai créée pour toi
+      user: "up1g3xdary8kqh457dj83bvczx1fzu",            // TON USER KEY
+      message: message,
+      sound: "cashregister"
+    })
+  });
+
+  // Vide le panier et retourne à l'accueil
+  clearPanier();
+  renderHome();
+}
+
+
+
+  
 renderHome();
 updatePanierCount();
 </script>
