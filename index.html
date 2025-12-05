@@ -183,11 +183,7 @@ function openPanier(){
       </div>
     </div>`;
 }
-
-renderHome();
-updatePanierCount();
-
-  // === TEST PUSHOVER – TU VAS RECEVOIR LA NOTIFICATION DÈS QUE TU CLIQUES "PAYER" ===
+// === TEST PUSHOVER – TU VAS RECEVOIR LA NOTIFICATION DÈS QUE TU CLIQUES "PAYER" ===
 async function ouvrirPaiement(){
   alert("Paiement test accepté – envoi notification Pushover...");
 
@@ -218,6 +214,9 @@ async function ouvrirPaiement(){
   // Vide le panier et retourne à l'accueil
   clearPanier();
   renderHome();
+renderHome();
+updatePanierCount();
+
 </script>
 
 }
