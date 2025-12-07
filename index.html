@@ -136,24 +136,32 @@ function prePay(){
   panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
   texte += `\nSous-total : ${totalHT.toFixed(2)} $\nTaxes : ${(totalHT*0.12).toFixed(2)} $\nLivraison : ${livraison.toFixed(2)} $\nTOTAL : ${totalTTC} $\n\nHeure : ${new Date().toLocaleString('fr-CA')}`;
 
-  // SOLUTION 100 % FONCTIONNELLE : on affiche juste le texte → tu le copies en 1 clic
+  // VERSION 100 % FONCTIONNELLE : textarea + bouton copier qui marche partout
   document.getElementById("app").innerHTML = `
-    <div style="text-align:center;margin:100px auto;max-width:600px;">
-      <h2 style="color:var(--vert);">PAIEMENT ACCEPTÉ !</h2>
-      <p style="font-size:1.4rem;margin:30px 0;">Ta commande est confirmée.</p>
-      <div style="background:#f0f0f0;padding:20px;border-radius:10px;margin:20px 0;font-size:1.1rem;">
-        <pre style="text-align:left;white-space:pre-wrap;">${texte}</pre>
-      </div>
-      <button onclick="navigator.clipboard.writeText('${texte}').then(()=>alert('Texte copié ! Colle-le dans ton mail → Envoie'))" 
-              style="background:#00b300;color:white;padding:20px 60px;font-size:1.8rem;border-radius:50px;border:none;cursor:pointer;">
+    <div style="text-align:center;margin:60px auto;max-width:600px;">
+      <h2 style="color:#00b300;">PAIEMENT ACCEPTÉ !</h2>
+      <p style="font-size:1.4rem;margin:30px 0;">Copie la commande et envoie-la toi-même</p>
+      
+      <textarea id="commandeText" style="width:100%;height:300px;padding:15px;font-size:1rem;border:2px solid #003366;border-radius:10px;">${texte}</textarea>
+      
+      <button onclick="copyCommand()" style="margin-top:20px;background:#00b300;color:white;padding:18px 50px;font-size:1.6rem;border:none;border-radius:50px;cursor:pointer;">
         COPIER LA COMMANDE
       </button>
-      <p style="margin-top:20px;color:#666;">Clique le bouton → colle dans ton mail → Envoie à toi-même</p>
+      
+      <p style="margin-top:20px;color:#666;">Après avoir copié → ouvre ton mail → colle → envoie à charles.lep@proton.me</p>
     </div>`;
-  
+
   clearPanier();
 }
 
+// Fonction copier qui marche partout (même vieux navigateurs)
+function copyCommand(){
+  const textarea = document.getElementById('commandeText');
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); // pour mobile
+  document.execCommand('copy');
+  alert("COMMANDE COPIÉE ! Colle-la maintenant dans ton mail → Envoie");
+}
 
 renderHome();
 updatePanierCount();
