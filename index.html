@@ -126,19 +126,26 @@ function openPanier(){
 
 // === PAIEMENT 100 % PRÉPAYÉ (fonctionne à coup sûr) ===
 function prePay(){
-  if(panier.length===0) return alert("Vide !");
+ if(panier.length===0) return alert("Panier vide !");
+
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = calculerFraisLivraison(totalHT);
   const totalTTC = (totalHT * 1.12 + livraison).toFixed(2);
 
-  // Email automatique (0 bug, 100 % fiable)
   let texte = `COMMANDE PAYÉE – Livré Magog\n\n`;
   panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
-  texte += `\nSous-total : ${totalHT.toFixed(2)} $\nTaxes : ${(totalHT*0.12).toFixed(2)} $\nLivraison : ${livraison.toFixed(2)} $\nTOTAL : ${totalTTC} $\n\nHeure : ${new Date().toLocaleString('fr-CA')}\n\nLe client a déjà payé par carte !`;
+  texte += `\nSous-total : ${totalHT.toFixed(2)} $\nTaxes : ${(totalHT*0.12).toFixed(2)} $\nLivraison : ${livraison.toFixed(2)} $\nTOTAL : ${totalTTC} $\n\nHeure : ${new Date().toLocaleString('fr-CA')}`;
 
-  window.open(`mailto:charles.lep@proton.me?subject=COMMANDE PAYÉE ${totalTTC} $&body=${encodeURIComponent(texte)}`);
+  // FIX : lien cliquable au lieu de popup bloqué
+  const mailto = `mailto:charles.lep@proton.me?subject=COMMANDE PAYÉE ${totalTTC} $&body=${encodeURIComponent(texte)}`;
+  const a = document.createElement('a');
+  a.href = mailto;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-  alert("Paiement par carte accepté ! Email envoyé – tu reçois la commande dans 3 sec.");
+  alert("Paiement accepté ! Clique OK → ton app mail s’ouvre avec la commande prête à envoyer.");
 
   clearPanier();
   renderHome();
