@@ -40,14 +40,16 @@
 <div id="toast"></div>
 
 <!-- SECTION PAIEMENT STRIPE (apparaît seulement quand on clique "Payer") -->
-<div id="payment-section">
-  <h2>Paiement sécurisé 100 % en ligne</h2>
-  <p>Total : <strong id="payment-total">0,00 $</strong></p>
-  <div id="card-element"></div>
-  <button id="pay-button" class="btn">Payer maintenant</button>
-  <div id="payment-message" style="margin-top:20px;font-weight:bold;"></div>
-</div>
-  <button class="btn" style="background:#666;margin-top:15px;" onclick="backToCart()">Retour au panier</button>
+<div id="payment-section" style="display:none;">
+  <div style="max-width:500px;margin:40px auto;background:white;padding:30px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.1);text-align:center;">
+    <h2>Paiement sécurisé</h2>
+    <p>Total : <strong id="payment-total">0,00 $</strong></p>
+    <div id="card-element"></div>
+    <button id="pay-button" class="btn">Payer maintenant</button>
+    <div id="payment-message" style="margin-top:20px;font-weight:bold;"></div>
+    <br><br>
+    <button class="btn" style="background:#666;" onclick="location.reload()">Retour à l'accueil</button>
+  </div>
 </div>
 
 <script>
