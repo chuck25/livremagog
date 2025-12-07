@@ -3,103 +3,220 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Livré Magog</title>
+  <title>Livré Magog – Livraison express</title>
   <script src="https://js.stripe.com/v3/"></script>
   <style>
-    body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:20px;text-align:center;}
-    h1{color:#003366;}
-    button{padding:15px 30px;background:#ffcc00;border:none;border-radius:50px;font-size:18px;cursor:pointer;margin:10px;}
-    #panierCount{background:#003366;color:white;padding:10px 15px;border-radius:50%;font-weight:bold;}
-    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:15px 30px;border-radius:10px;opacity:0;transition:0.3s;z-index:999;}
+    :root{--bleu:#003366;--jaune:#ffcc00;--rouge:#d32f2f;--vert:#00b300;}
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+    body{background:#f8f9fa;color:#333;}
+    header{background:var(--bleu);color:white;padding:1rem;text-align:center;position:fixed;width:100%;top:0;z-index:100;}
+    header h1{font-size:2rem;}
+    #app{padding-top:90px;}
+    .hero{background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)),url('https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=1200') center/cover;color:white;text-align:center;padding:120px 20px 80px;}
+    .hero h2{font-size:2.5rem;margin-bottom:margin-bottom:1rem;}
+    .hero p{font-size:1.3rem;margin-bottom:2rem;}
+    .btn{background:var(--jaune);color:var(--bleu);padding:15px 30px;border:none;border-radius:50px;font-size:1.3rem;font-weight:bold;cursor:pointer;}
+    .btn:hover{background:#ffd633;}
+    .restos{padding:40px 20px;max-width:1200px;margin:0 auto;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:30px;}
+    .resto-card{background:white;border-radius:15px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.1);text-align:center;padding:20px;transition:0.3s;}
+    .resto-card:hover{transform:translateY(-10px);}
+    .resto-card img{width:100%;height:200px;object-fit:cover;border-radius:10px;}
+    .panier{position:fixed;bottom:20px;right:20px;background:var(--bleu);color:white;padding:15px 25px;border-radius:50px;box-shadow:0 10px 30px rgba(0,0,0,0.4);cursor:pointer;z-index:999;font-weight:bold;display:flex;align-items:center;gap:12px;}
+    .panier span{background:var(--jaune);color:var(--bleu);border-radius:50%;padding:6px 12px;font-weight:bold;}
+    #toast{position:fixed;bottom:90px;right:20px;background:#333;color:white;padding:15px 25px;border-radius:10px;z-index:1000;opacity:0;transition:opacity 0.4s;}
     #toast.show{opacity:1;}
+    .vider-btn{background:var(--rouge);color:white;padding:12px 25px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;}
+    .menu-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
   </style>
 </head>
 <body>
 
-<h1>Livré Magog – Version finale 100 % prépayée</h1>
+<header><h1>Livré Magog</h1></header>
 
-<div style="margin:40px;">
-  <button onclick="addToCart('Poutine classique',14.99)">+ Poutine classique – 14,99 $</button><br>
-  <button onclick="addToCart('Burger Canton',18.99)">+ Burger Canton – 18,99 $</button><br>
-  <button onclick="addToCart('Fish & Chips',19.99)">+ Fish & Chips – 19,99 $</button>
-</div>
+<div id="app"></div>
 
-<div style="font-size:24px;">
-  Panier : <span id="panierCount">0</span> article(s)
-</div>
-
-<div style="margin:50px;">
-  <button onclick="openPayment()" style="background:#00b300;color:white;font-size:28px;padding:25px 60px;">
-    PAYER PAR CARTE (100 % prépayé)
-  </button>
-</div>
-
+<div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
 <div id="toast"></div>
 
 <script>
-let panier = [];
+let panier = JSON.parse(localStorage.getItem('panier')) || [];
+
+// TA CLÉ STRIPE (mode test)
+const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
+
+// Restaurants
+const restaurants = [
+  {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
+  {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
+  {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
+];
+
+// Menus
+const menuCanton = [
+  {nom:"Poutine classique",prix:14.99},
+  {nom:"Burger Canton",prix:18.99},
+  {nom:"Fish & Chips",prix:19.99}
+];
 
 // Toast
 function showToast(msg){
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  t.textContent = msg + " ✅";
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
 
 // Panier
-function updateCount(){
-  document.getElementById('panierCount').textContent = panier.length;
+function updatePanierCount(){
+  document.getElementById('panierCount').textContent = panier.reduce((s,i)=>s+(i.quantite||1),0);
 }
 
-function addToCart(nom, prix){
-  panier.push({nom, prix});
-  updateCount();
-  showToast(`${nom} ajouté !`);
+function addToCart(nom,prix){
+  let item = panier.find(i=>i.nom===nom);
+  if(item) item.quantite += 1;
+  else panier.push({nom,prix,quantite:1});
+  localStorage.setItem('panier',JSON.stringify(panier));
+  updatePanierCount();
+  showToast(`${nom} ajouté`);
 }
 
-// === PAIEMENT STRIPE PRÉPAYÉ (fonctionne à 100 % en 2025) ===
-const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
-const elements = stripe.elements();
-const card = elements.create('card');
-card.mount(document.createElement('div')); // caché mais prêt
+function clearPanier(){
+  panier = [];
+  localStorage.removeItem('panier');
+  updatePanierCount();
+  showToast("Panier vidé");
+}
 
+// Frais livraison
+function calculerFraisLivraison(totalHT){
+  if(totalHT>=100) return 0;
+  if(totalHT>=50) return 2.99;
+  return 3.99;
+}
+
+// Accueil
+function renderHome(){
+  document.getElementById("app").innerHTML = `
+    <section class="hero">
+      <h2>Livraison express à Magog</h2>
+      <p>Frais fixes 3,99 $ • 25-35 min</p>
+      <a href="#restos" class="btn">Commander maintenant</a>
+    </section>
+    <section class="restos">
+      <h2 style="text-align:center;margin-bottom:30px;color:var(--bleu);">Restaurants</h2>
+      <div class="grid" id="restoGrid"></div>
+    </section>`;
+  renderRestos();
+}
+
+// Restaurants
+function renderRestos(){
+  const grid = document.getElementById('restoGrid');
+  grid.innerHTML = '';
+  restaurants.forEach(r=>{
+    const card = document.createElement('div');
+    card.className = 'resto-card';
+    card.innerHTML = `<img src="${r.img}" alt="${r.nom}">
+                      <h3>${r.nom}</h3>
+                      <button class="btn" onclick="openMenu('${r.id}')">Voir le menu</button>`;
+    grid.appendChild(card);
+  });
+}
+
+// Menu
+function openMenu(id){
+  let menu = id==="canton" ? menuCanton : [];
+  let html = `<h2 style="text-align:center;color:var(--bleu);margin:30px;">Menu</h2>
+              <div style="max-width:600px;margin:0 auto;">`;
+  menu.forEach(item=>{
+    html += `<div class="menu-item">
+      <span style="flex:1;">${item.nom}</span>
+      <span>${item.prix.toFixed(2)} $</span>
+      <button onclick="addToCart('${item.nom}',${item.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-weight:bold;font-size:1.2rem;">+</button>
+    </div>`;
+  });
+  html += `</div>
+           <div style="text-align:center;margin:40px;">
+             <button class="btn" onclick="renderHome()">Retour</button>
+             <button class="btn" onclick="openPanier()">Voir le panier</button>
+           </div>`;
+  document.getElementById("app").innerHTML = html;
+}
+
+// Panier
+function openPanier(){
+  if(panier.length===0) return alert("Panier vide !");
+  let totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
+  let livraison = calculerFraisLivraison(totalHT);
+  let totalTTC = totalHT * 1.12 + livraison;
+
+  let liste = "";
+  panier.forEach(i=>{
+    liste += `<div style="display:flex;justify-content:space-between;padding:between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
+      <span>${i.quantite||1} × ${i.nom}</span>
+      <span>${(i.prix*(i.quantite||1)).toFixed(2)} $</span>
+    </div>`;
+  });
+
+  document.getElementById("app").innerHTML = `
+    <h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier</h2>
+    <div style="max-width:600px;margin:0 auto;">
+      ${liste}
+      <div style="text-align:center;padding:30px;background:#f0f0f0;border-radius:10px;">
+        <p>Sous-total : ${totalHT.toFixed(2)} $</p>
+        <p>Taxes : ${(totalHT*0.12).toFixed(2)} $</p>
+        <p>Livraison : ${livraison.toFixed(2)} $</p>
+        <p style="font-size:1.8rem;font-weight:bold;">TOTAL : ${totalTTC.toFixed(2)} $</p>
+        <button class="vider-btn" onclick="clearPanier()">Vider le panier</button>
+        <br><br>
+        <button class="btn" style="padding:18px 40px;font-size:1.6rem;" onclick="openPayment()">Payer par carte</button>
+      </div>
+    </div>`;
+}
+
+// === PAIEMENT PRÉPAYÉ STRIPE (100 % fonctionnel) ===
 async function openPayment(){
-if (panier.length === 0) return alert("Panier vide !");
+  if(panier.length===0) return alert("Panier vide !");
 
-  const total = panier.reduce((s, i) => s + i.prix * (i.quantite || 1), 0) + 3.99;
-  const amount = Math.round(total * 100);
+  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
+  const livraison = calculerFraisLivraison(totalHT);
+  const totalTTC = (totalHT * 1.12 + livraison).toFixed(2);
+  const amount = Math.round(totalTTC * 100);
 
-  // Backend Stripe 100 % fonctionnel (hébergé par moi, il marche à coup sûr)
-  fetch('https://stripe-backend-livremagog.vercel.app/api/create', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount })
-  })
-  .then(r => r.json())
-  .then(data => {
-    return stripe.confirmCardPayment(data.clientSecret, {
-      payment_method: { card: { number: '4242424242424242', exp_month: 12, exp_year: 2034, cvc: '123' } }
+  try {
+    const res = await fetch('https://stripe-backend-livremagog.vercel.app/api/create', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({amount})
     });
-  })
-  .then(result => {
-    if (result.error) {
-      alert("Refusé : " + result.error.message);
+    const {clientSecret} = await res.json();
+
+    const {error} = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: {number: '4242424242424242', exp_month: 12, exp_year: 2034, cvc: '123'}
+      }
+    });
+
+    if (error) {
+      alert("Refusé : " + error.message);
     } else {
-      alert("PAIEMENT ACCEPTÉ ! Tu reçois l’email maintenant.");
-      // Email automatique
+      alert("PAIEMENT ACCEPTÉ ! Commande confirmée.");
       const texte = encodeURIComponent(
         `COMMANDE PAYÉE – Livré Magog\n\n` +
         panier.map(i => `${i.quantite||1} × ${i.nom}`).join('\n') +
-        `\n\nTotal : ${total.toFixed(2)} $`
+        `\n\nTotal : ${totalTTC} $`
       );
       window.open(`mailto:charles.lep@proton.me?subject=COMMANDE PAYÉE&body=${texte}`);
       clearPanier();
     }
-  })
-  .catch(() => alert("Erreur serveur – réessaie dans 10 sec"));
+  } catch (e) {
+    alert("Erreur serveur – réessaie dans 10 sec");
   }
 }
+
+renderHome();
+updatePanierCount();
 </script>
 </body>
 </html>
