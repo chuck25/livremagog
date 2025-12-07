@@ -3,145 +3,752 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Livré Magog – Livraison express</title>
+  <title>Livré Magog – Livraison Pro</title>
   <style>
-    :root{--bleu:#003366;--jaune:#ffcc00;--rouge:#d32f2f;--vert:#00b300;}
+    :root{
+      --bleu:#003366;
+      --jaune:#ffcc00;
+      --rouge:#d32f2f;
+      --vert:#00b300;
+      --orange:#ff9800;
+    }
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
     body{background:#f8f9fa;color:#333;}
-    header{background:var(--bleu);color:white;padding:1rem;text-align:center;position:fixed;width:100%;top:0;z-index:100;}
-    header h1{font-size:2rem;}
-    #app{padding-top:90px;}
-    .hero{background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)),url('https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=1200') center/cover;color:white;text-align:center;padding:120px 20px 80px;}
+    
+    header{
+      background:var(--bleu);
+      color:white;
+      padding:1rem 2rem;
+      position:fixed;
+      width:100%;
+      top:0;
+      z-index:100;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      box-shadow:0 2px 10px rgba(0,0,0,0.2);
+    }
+    header h1{font-size:1.8rem;}
+    .header-links{display:flex;gap:20px;}
+    .header-links a{color:var(--jaune);text-decoration:none;font-weight:bold;cursor:pointer;}
+    .header-links a:hover{text-decoration:underline;}
+    
+    #app{padding-top:90px;min-height:calc(100vh - 90px);}
+    
+    .hero{
+      background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)),
+      url('https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=1200') center/cover;
+      color:white;
+      text-align:center;
+      padding:120px 20px 80px;
+    }
     .hero h2{font-size:2.5rem;margin-bottom:1rem;}
     .hero p{font-size:1.3rem;margin-bottom:2rem;}
-    .btn{background:var(--jaune);color:var(--bleu);padding:15px 30px;border:none;border-radius:50px;font-size:1.3rem;font-weight:bold;cursor:pointer;}
-    .btn:hover{background:#ffd633;}
-    .restos{padding:40px 20px;max-width:1200px;margin:0 auto;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:30px;}
-    .resto-card{background:white;border-radius:15px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.1);text-align:center;padding:20px;transition:0.3s;}
-    .resto-card:hover{transform:translateY(-10px);}
-    .resto-card img{width:100%;height:200px;object-fit:cover;border-radius:10px;}
-    .panier{position:fixed;bottom:20px;right:20px;background:var(--bleu);color:white;padding:15px 25px;border-radius:50px;box-shadow:0 10px 30px rgba(0,0,0,0.4);cursor:pointer;z-index:999;font-weight:bold;display:flex;align-items:center;gap:12px;}
-    .panier span{background:var(--jaune);color:var(--bleu);border-radius:50%;padding:6px 12px;font-weight:bold;}
-    #toast{position:fixed;bottom:90px;right:20px;background:#333;color:white;padding:15px 25px;border-radius:10px;z-index:1000;opacity:0;transition:opacity 0.4s;}
+    .hero .stats{display:flex;justify-content:center;gap:40px;margin-top:30px;flex-wrap:wrap;}
+    .hero .stat{background:rgba(255,255,255,0.1);padding:20px 30px;border-radius:10px;backdrop-filter:blur(10px);}
+    .hero .stat strong{display:block;font-size:2rem;color:var(--jaune);}
+    
+    .btn{
+      background:var(--jaune);
+      color:var(--bleu);
+      padding:15px 30px;
+      border:none;
+      border-radius:50px;
+      font-size:1.2rem;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.3s;
+    }
+    .btn:hover{background:#ffd633;transform:scale(1.05);}
+    .btn-secondary{background:var(--bleu);color:white;}
+    .btn-secondary:hover{background:#004080;}
+    
+    .section{padding:60px 20px;max-width:1200px;margin:0 auto;}
+    .section h2{text-align:center;color:var(--bleu);font-size:2.2rem;margin-bottom:40px;}
+    
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:25px;
+    }
+    
+    .card{
+      background:white;
+      border-radius:15px;
+      overflow:hidden;
+      box-shadow:0 5px 15px rgba(0,0,0,0.1);
+      transition:0.3s;
+      cursor:pointer;
+    }
+    .card:hover{transform:translateY(-10px);box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+    .card img{width:100%;height:200px;object-fit:cover;}
+    .card-body{padding:20px;text-align:center;}
+    .card h3{color:var(--bleu);margin-bottom:10px;}
+    .card p{color:#666;margin-bottom:15px;font-size:0.95rem;}
+    .card .badge{
+      display:inline-block;
+      background:var(--vert);
+      color:white;
+      padding:5px 12px;
+      border-radius:20px;
+      font-size:0.85rem;
+      margin:5px;
+    }
+    
+    .menu-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:20px;
+      background:white;
+      margin:15px 0;
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.1);
+      transition:0.3s;
+    }
+    .menu-item:hover{box-shadow:0 5px 20px rgba(0,0,0,0.15);}
+    .menu-item-info{flex:1;}
+    .menu-item-info h4{color:var(--bleu);margin-bottom:5px;}
+    .menu-item-info p{color:#666;font-size:0.9rem;}
+    .menu-item-price{font-size:1.3rem;font-weight:bold;color:var(--vert);margin:0 20px;}
+    .add-btn{
+      background:var(--jaune);
+      color:var(--bleu);
+      border:none;
+      padding:12px 20px;
+      border-radius:50px;
+      font-size:1.1rem;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.3s;
+    }
+    .add-btn:hover{background:#ffd633;transform:scale(1.1);}
+    
+    .panier-float{
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      background:var(--bleu);
+      color:white;
+      padding:18px 30px;
+      border-radius:50px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.4);
+      cursor:pointer;
+      z-index:999;
+      font-weight:bold;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      transition:0.3s;
+    }
+    .panier-float:hover{transform:scale(1.1);background:#004080;}
+    .panier-float .badge-count{
+      background:var(--jaune);
+      color:var(--bleu);
+      border-radius:50%;
+      padding:8px 14px;
+      font-weight:bold;
+      font-size:1.1rem;
+    }
+    
+    .cart-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:20px;
+      background:white;
+      margin:15px 0;
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    }
+    .cart-item-info{flex:1;}
+    .cart-item-controls{display:flex;align-items:center;gap:15px;}
+    .qty-btn{
+      background:var(--bleu);
+      color:white;
+      border:none;
+      width:35px;
+      height:35px;
+      border-radius:50%;
+      cursor:pointer;
+      font-size:1.2rem;
+      font-weight:bold;
+    }
+    .qty-btn:hover{background:#004080;}
+    .qty-display{font-size:1.2rem;font-weight:bold;min-width:30px;text-align:center;}
+    
+    .summary-box{
+      background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);
+      padding:30px;
+      border-radius:15px;
+      margin:30px 0;
+    }
+    .summary-line{
+      display:flex;
+      justify-content:space-between;
+      padding:10px 0;
+      font-size:1.1rem;
+    }
+    .summary-line.total{
+      border-top:3px solid var(--bleu);
+      margin-top:15px;
+      padding-top:20px;
+      font-size:1.8rem;
+      font-weight:bold;
+      color:var(--vert);
+    }
+    
+    .payment-methods{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:15px;
+      margin:30px 0;
+    }
+    .payment-method{
+      background:white;
+      padding:25px;
+      border-radius:12px;
+      text-align:center;
+      cursor:pointer;
+      border:3px solid transparent;
+      transition:0.3s;
+    }
+    .payment-method:hover{border-color:var(--jaune);transform:scale(1.05);}
+    .payment-method.selected{border-color:var(--vert);background:#f0fff0;}
+    .payment-method img{width:60px;height:60px;margin-bottom:10px;}
+    
+    .address-form{
+      background:white;
+      padding:30px;
+      border-radius:15px;
+      max-width:600px;
+      margin:30px auto;
+      box-shadow:0 5px 20px rgba(0,0,0,0.1);
+    }
+    .form-group{margin-bottom:20px;}
+    .form-group label{display:block;margin-bottom:8px;font-weight:bold;color:var(--bleu);}
+    .form-group input,.form-group textarea{
+      width:100%;
+      padding:12px;
+      border:2px solid #ddd;
+      border-radius:8px;
+      font-size:1rem;
+    }
+    .form-group input:focus,.form-group textarea:focus{
+      outline:none;
+      border-color:var(--jaune);
+    }
+    
+    .order-status{
+      max-width:800px;
+      margin:0 auto;
+      background:white;
+      padding:40px;
+      border-radius:15px;
+      box-shadow:0 5px 20px rgba(0,0,0,0.1);
+    }
+    .status-steps{
+      display:flex;
+      justify-content:space-between;
+      margin:40px 0;
+      position:relative;
+    }
+    .status-steps::before{
+      content:'';
+      position:absolute;
+      top:25px;
+      left:10%;
+      right:10%;
+      height:4px;
+      background:#ddd;
+      z-index:0;
+    }
+    .status-step{
+      text-align:center;
+      flex:1;
+      position:relative;
+      z-index:1;
+    }
+    .status-step-circle{
+      width:50px;
+      height:50px;
+      border-radius:50%;
+      background:#ddd;
+      margin:0 auto 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1.5rem;
+      transition:0.3s;
+    }
+    .status-step.active .status-step-circle{
+      background:var(--vert);
+      color:white;
+      animation:pulse 2s infinite;
+    }
+    .status-step.completed .status-step-circle{
+      background:var(--bleu);
+      color:white;
+    }
+    @keyframes pulse{
+      0%,100%{transform:scale(1);}
+      50%{transform:scale(1.1);}
+    }
+    
+    #toast{
+      position:fixed;
+      bottom:100px;
+      right:20px;
+      background:#333;
+      color:white;
+      padding:18px 30px;
+      border-radius:12px;
+      z-index:1000;
+      opacity:0;
+      transition:opacity 0.4s;
+      box-shadow:0 5px 20px rgba(0,0,0,0.3);
+    }
     #toast.show{opacity:1;}
-    .vider-btn{background:var(--rouge);color:white;padding:12px 25px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;}
-    .menu-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+    #toast.success{background:var(--vert);}
+    #toast.error{background:var(--rouge);}
+    
+    .empty-state{
+      text-align:center;
+      padding:60px 20px;
+    }
+    .empty-state img{
+      width:200px;
+      opacity:0.3;
+      margin-bottom:20px;
+    }
+    .empty-state h3{color:#999;margin-bottom:20px;}
+    
+    .modal-overlay{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      bottom:0;
+      background:rgba(0,0,0,0.7);
+      z-index:1000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .modal-overlay.show{display:flex;}
+    .modal{
+      background:white;
+      border-radius:20px;
+      padding:40px;
+      max-width:500px;
+      width:100%;
+      max-height:90vh;
+      overflow-y:auto;
+      animation:slideUp 0.3s;
+    }
+    @keyframes slideUp{
+      from{transform:translateY(100px);opacity:0;}
+      to{transform:translateY(0);opacity:1;}
+    }
+    
+    .admin-panel{
+      background:white;
+      padding:30px;
+      border-radius:15px;
+      margin:20px;
+    }
+    .order-card{
+      background:#f9f9f9;
+      padding:20px;
+      border-radius:12px;
+      margin:15px 0;
+      border-left:5px solid var(--orange);
+    }
+    .order-card.completed{border-left-color:var(--vert);}
+    
+    @media(max-width:768px){
+      .hero h2{font-size:1.8rem;}
+      .hero .stats{flex-direction:column;gap:15px;}
+      header{flex-direction:column;gap:10px;}
+      .summary-line{font-size:1rem;}
+      .summary-line.total{font-size:1.5rem;}
+    }
   </style>
 </head>
 <body>
 
-<header><h1>Livré Magog</h1></header>
+<header>
+  <h1>🚚 Livré Magog</h1>
+  <div class="header-links">
+    <a onclick="app.render('home')">Accueil</a>
+    <a onclick="app.render('orders')">Mes commandes</a>
+    <a onclick="app.render('admin')">Admin</a>
+  </div>
+</header>
+
 <div id="app"></div>
-<div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
+<div class="panier-float" onclick="app.render('cart')">
+  🛒 Panier <span class="badge-count" id="cartCount">0</span>
+</div>
 <div id="toast"></div>
+<div class="modal-overlay" id="modal" onclick="app.closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div id="modalContent"></div>
+  </div>
+</div>
 
 <script>
-let panier = JSON.parse(localStorage.getItem('panier')) || [];
+// ========================================
+// BASE DE DONNÉES SIMULÉE (remplace un vrai backend)
+// ========================================
+const DB = {
+  restaurants: [
+    {
+      id:'canton',
+      nom:'Canton Brasse',
+      img:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800',
+      description:'Cuisine québécoise et microbrasserie artisanale',
+      cuisine:'Québécois',
+      temps:'25-35 min',
+      note:4.7,
+      menu:[
+        {id:'p1',nom:'Poutine classique',description:'Frites, sauce brune, fromage en grains',prix:14.99,categorie:'Entrées'},
+        {id:'p2',nom:'Burger Canton',description:'Bœuf Angus, bacon fumé, fromage cheddar',prix:18.99,categorie:'Plats'},
+        {id:'p3',nom:'Fish & Chips',description:'Morue fraîche, frites maison, sauce tartare',prix:19.99,categorie:'Plats'},
+        {id:'p4',nom:'Salade César',description:'Laitue romaine, croûtons, parmesan, poulet grillé',prix:16.99,categorie:'Entrées'},
+        {id:'p5',nom:'Ailes de poulet (1 lb)',description:'Sauce BBQ ou Buffalo, céleri, ranch',prix:15.99,categorie:'Entrées'},
+        {id:'p6',nom:'Brownie maison',description:'Chocolat noir, glace vanille',prix:8.99,categorie:'Desserts'}
+      ]
+    },
+    {
+      id:'memphre',
+      nom:'La Memphré',
+      img:'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800',
+      description:'Restaurant gastronomique vue sur le lac',
+      cuisine:'Gastronomique',
+      temps:'35-45 min',
+      note:4.9,
+      menu:[
+        {id:'m1',nom:'Tartare de saumon',description:'Saumon frais, avocat, câpres, citron',prix:22.99,categorie:'Entrées'},
+        {id:'m2',nom:'Magret de canard',description:'Canard du Québec, réduction porto',prix:32.99,categorie:'Plats'},
+        {id:'m3',nom:'Risotto aux champignons',description:'Riz arborio, champignons sauvages, parmesan',prix:24.99,categorie:'Plats'},
+        {id:'m4',nom:'Filet mignon',description:'Bœuf AAA, légumes grillés, pommes duchesse',prix:38.99,categorie:'Plats'},
+        {id:'m5',nom:'Crème brûlée',description:'Vanille de Madagascar',prix:9.99,categorie:'Desserts'},
+        {id:'m6',nom:'Tarte au citron',description:'Meringue italienne',prix:10.99,categorie:'Desserts'}
+      ]
+    },
+    {
+      id:'pizza',
+      nom:'Pizzeria Magog',
+      img:'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800',
+      description:'Pizzas authentiques au four à bois',
+      cuisine:'Italien',
+      temps:'20-30 min',
+      note:4.6,
+      menu:[
+        {id:'pz1',nom:'Margherita',description:'Sauce tomate, mozzarella, basilic frais',prix:16.99,categorie:'Pizzas'},
+        {id:'pz2',nom:'Pepperoni',description:'Sauce tomate, mozzarella, pepperoni',prix:18.99,categorie:'Pizzas'},
+        {id:'pz3',nom:'Quatre fromages',description:'Mozzarella, gorgonzola, parmesan, chèvre',prix:20.99,categorie:'Pizzas'},
+        {id:'pz4',nom:'Végétarienne',description:'Légumes grillés, olives, feta',prix:19.99,categorie:'Pizzas'},
+        {id:'pz5',nom:'Calzone',description:'Pizza fermée, jambon, champignons, ricotta',prix:17.99,categorie:'Pizzas'},
+        {id:'pz6',nom:'Tiramisu',description:'Mascarpone, café, cacao',prix:8.99,categorie:'Desserts'}
+      ]
+    }
+  ],
+  orders: JSON.parse(localStorage.getItem('orders') || '[]'),
+  cart: JSON.parse(localStorage.getItem('cart') || '[]')
+};
 
-// Restaurants & menus
-const restaurants = [
-  {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
-  {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
-  {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
-];
-const menuCanton = [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99}];
-
-// Toast
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg + " ✅";
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
-
-// Panier
-function updatePanierCount(){
-  document.getElementById('panierCount').textContent = panier.reduce((s,i)=>s+(i.quantite||1),0);
-}
-function addToCart(nom,prix){
-  let item = panier.find(i=>i.nom===nom);
-  if(item) item.quantite += 1;
-  else panier.push({nom,prix,quantite:1});
-  localStorage.setItem('panier',JSON.stringify(panier));
-  updatePanierCount();
-  showToast(`${nom} ajouté`);
-}
-function clearPanier(){
-  panier = [];
-  localStorage.removeItem('panier');
-  updatePanierCount();
-  showToast("Panier vidé");
-}
-function calculerFraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
-
-// Accueil
-function renderHome(){
-  document.getElementById("app").innerHTML = `
-    <section class="hero"><h2>Livraison express à Magog</h2><p>Frais fixes 3,99 $ • 25-35 min</p><a href="#restos" class="btn">Commander maintenant</a></section>
-    <section class="restos"><h2 style="text-align:center;margin-bottom:30px;color:var(--bleu);">Restaurants</h2><div class="grid" id="restoGrid"></div></section>`;
-  renderRestos();
-}
-function renderRestos(){
-  const g = document.getElementById('restoGrid'); g.innerHTML='';
-  restaurants.forEach(r=>{
-    const c=document.createElement('div'); c.className='resto-card';
-    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
-    g.appendChild(c);
-  });
-}
-function openMenu(id){
-  const m = id==="canton"?menuCanton:[];
-  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">Canton Brasse</h2><div style="max-width:600px;margin:0 auto;">`;
-  m.forEach(i=>h+=`<div class="menu-item"><span style="flex:1;">${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
-    <button onclick="addToCart('${i.nom}',${i.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-size:1.2rem;">+</button></div>`);
-  h+=`</div><div style="text-align:center;margin:40px;"><button class="btn" onclick="renderHome()">Retour</button><button class="btn" onclick="openPanier()">Panier</button></div>`;
-  document.getElementById("app").innerHTML=h;
-}
-
-// Panier + paiement prépayé (100 % fiable)
-function openPanier(){
-  if(panier.length===0) return alert("Vide !");
-  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
-  const livraison = calculerFraisLivraison(totalHT);
-  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
-  let liste = "";
-  panier.forEach(i=>liste+=`<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
-    <span>${i.quantite||1} × ${i.nom}</span><span>${(i.prix*(i.quantite||1)).toFixed(2)} $</span></div>`);
-  document.getElementById("app").innerHTML = `
-    <h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier</h2>
-    <div style="max-width:600px;margin:0 auto;">
-      ${liste}
-      <div style="background:#f0f0f0;padding:30px;border-radius:15px;margin:30px 0;text-align:center;">
-        <p style="font-size:2rem;font-weight:bold;color:var(--vert);">TOTAL : ${totalTTC} $</p>
-        <button class="btn" style="padding:20px 60px;font-size:1.8rem;" onclick="prePay()">PAYER PAR CARTE</button>
-        <button class="vider-btn" style="margin-top:20px;" onclick="clearPanier()">Vider</button>
-      </div>
-    </div>`;
-}
-
-// PAIEMENT 100 % PRÉPAYÉ (zéro backend, zéro erreur)
-function prePay(){
-  if(panier.length===0) return;
-  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
-  const livraison = calculerFraisLivraison(totalHT);
-  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
-
-  let texte = `COMMANDE PAYÉE – Livré Magog\n\n`;
-  panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
-  texte += `\nSous-total : ${totalHT.toFixed(2)} $\nTaxes : ${(totalHT*0.12).toFixed(2)} $\nLivraison : ${livraison.toFixed(2)} $\nTOTAL : ${totalTTC} $\n\nHeure : ${new Date().toLocaleString('fr-CA')}`;
-
-  // Ouvre l’email (marche sur cell ET ordi)
-  window.location.href = `mailto:charles.lep@proton.me?subject=COMMANDE PAYÉE ${totalTTC} $&body=${encodeURIComponent(texte)}`;
-
-  alert("Paiement accepté ! Ton mail s’ouvre – clique Envoyer");
-
-  clearPanier();
-  renderHome();
-}
-
-renderHome();
-updatePanierCount();
-</script>
-</body>
-</html>
+// ========================================
+// SYSTÈME DE L'APPLICATION
+// ========================================
+const app = {
+  currentView: 'home',
+  selectedRestaurant: null,
+  selectedPaymentMethod: 'card',
+  orderInProgress: null,
+  
+  // Calculer les frais de livraison
+  calcDeliveryFee(subtotal) {
+    if(subtotal >= 100) return 0;
+    if(subtotal >= 50) return 2.99;
+    return 3.99;
+  },
+  
+  // Calculer le total du panier
+  calcCartTotal() {
+    const subtotal = DB.cart.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
+    const delivery = this.calcDeliveryFee(subtotal);
+    const taxes = subtotal * 0.14975; // TPS+TVQ Québec
+    const total = subtotal + delivery + taxes;
+    return {subtotal, delivery, taxes, total};
+  },
+  
+  // Mettre à jour le compteur du panier
+  updateCartCount() {
+    const count = DB.cart.reduce((sum, item) => sum + item.quantite, 0);
+    document.getElementById('cartCount').textContent = count;
+  },
+  
+  // Ajouter au panier
+  addToCart(restaurant, item) {
+    const existing = DB.cart.find(i => i.id === item.id);
+    if(existing) {
+      existing.quantite++;
+    } else {
+      DB.cart.push({
+        ...item,
+        quantite: 1,
+        restaurantId: restaurant.id,
+        restaurantNom: restaurant.nom
+      });
+    }
+    localStorage.setItem('cart', JSON.stringify(DB.cart));
+    this.updateCartCount();
+    this.showToast(`${item.nom} ajouté au panier`, 'success');
+  },
+  
+  // Modifier quantité
+  updateQuantity(itemId, delta) {
+    const item = DB.cart.find(i => i.id === itemId);
+    if(!item) return;
+    item.quantite += delta;
+    if(item.quantite <= 0) {
+      DB.cart = DB.cart.filter(i => i.id !== itemId);
+    }
+    localStorage.setItem('cart', JSON.stringify(DB.cart));
+    this.updateCartCount();
+    this.render('cart');
+  },
+  
+  // Vider le panier
+  clearCart() {
+    DB.cart = [];
+    localStorage.setItem('cart', JSON.stringify(DB.cart));
+    this.updateCartCount();
+    this.showToast('Panier vidé', 'success');
+    this.render('cart');
+  },
+  
+  // Créer une commande
+  createOrder(addressData) {
+    const totals = this.calcCartTotal();
+    const order = {
+      id: 'CMD' + Date.now(),
+      date: new Date().toISOString(),
+      items: [...DB.cart],
+      address: addressData,
+      paymentMethod: this.selectedPaymentMethod,
+      totals: totals,
+      status: 'pending', // pending -> confirmed -> preparing -> delivery -> completed
+      estimatedTime: 35
+    };
+    
+    DB.orders.unshift(order);
+    localStorage.setItem('orders', JSON.stringify(DB.orders));
+    
+    // Vider le panier
+    DB.cart = [];
+    localStorage.setItem('cart', JSON.stringify(DB.cart));
+    this.updateCartCount();
+    
+    // Simuler le paiement et le traitement
+    this.processOrder(order);
+    
+    return order;
+  },
+  
+  // Traiter la commande (simulation)
+  processOrder(order) {
+    this.orderInProgress = order;
+    this.render('orderStatus');
+    
+    // Simuler les étapes de la commande
+    setTimeout(() => {
+      order.status = 'confirmed';
+      this.updateOrderStatus();
+      this.showToast('Commande confirmée !', 'success');
+    }, 2000);
+    
+    setTimeout(() => {
+      order.status = 'preparing';
+      this.updateOrderStatus();
+      this.showToast('Préparation en cours...', 'success');
+    }, 5000);
+    
+    setTimeout(() => {
+      order.status = 'delivery';
+      this.updateOrderStatus();
+      this.showToast('En livraison !', 'success');
+    }, 10000);
+    
+    setTimeout(() => {
+      order.status = 'completed';
+      localStorage.setItem('orders', JSON.stringify(DB.orders));
+      this.updateOrderStatus();
+      this.showToast('Commande livrée ! Bon appétit ! 🎉', 'success');
+    }, 15000);
+  },
+  
+  // Mettre à jour le statut de commande
+  updateOrderStatus() {
+    if(this.currentView === 'orderStatus') {
+      this.render('orderStatus');
+    }
+  },
+  
+  // Toast notifications
+  showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `show ${type}`;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  },
+  
+  // Modal
+  showModal(content) {
+    document.getElementById('modalContent').innerHTML = content;
+    document.getElementById('modal').classList.add('show');
+  },
+  
+  closeModal(e) {
+    if(e && e.target.id !== 'modal') return;
+    document.getElementById('modal').classList.remove('show');
+  },
+  
+  // ========================================
+  // VUES DE L'APPLICATION
+  // ========================================
+  
+  render(view) {
+    this.currentView = view;
+    const app = document.getElementById('app');
+    
+    switch(view) {
+      case 'home':
+        app.innerHTML = this.renderHome();
+        break;
+      case 'menu':
+        app.innerHTML = this.renderMenu();
+        break;
+      case 'cart':
+        app.innerHTML = this.renderCart();
+        break;
+      case 'checkout':
+        app.innerHTML = this.renderCheckout();
+        break;
+      case 'orderStatus':
+        app.innerHTML = this.renderOrderStatus();
+        break;
+      case 'orders':
+        app.innerHTML = this.renderOrders();
+        break;
+      case 'admin':
+        app.innerHTML = this.renderAdmin();
+        break;
+    }
+  },
+  
+  renderHome() {
+    const stats = {
+      restaurants: DB.restaurants.length,
+      orders: DB.orders.length,
+      clients: new Set(DB.orders.map(o => o.address?.nom)).size || 1
+    };
+    
+    return `
+      <section class="hero">
+        <h2>🍔 Livraison express à Magog</h2>
+        <p>Les meilleurs restaurants • Frais fixes à partir de 2,99 $ • Livraison 25-45 min</p>
+        <button class="btn" onclick="document.querySelector('.section').scrollIntoView({behavior:'smooth'})">
+          Commander maintenant
+        </button>
+        <div class="stats">
+          <div class="stat">
+            <strong>${stats.restaurants}</strong>
+            <span>Restaurants</span>
+          </div>
+          <div class="stat">
+            <strong>${stats.orders}</strong>
+            <span>Commandes</span>
+          </div>
+          <div class="stat">
+            <strong>${stats.clients}+</strong>
+            <span>Clients satisfaits</span>
+          </div>
+        </div>
+      </section>
+      
+      <section class="section">
+        <h2>🍽️ Nos restaurants partenaires</h2>
+        <div class="grid">
+          ${DB.restaurants.map(r => `
+            <div class="card" onclick="app.selectedRestaurant='${r.id}';app.render('menu')">
+              <img src="${r.img}" alt="${r.nom}">
+              <div class="card-body">
+                <h3>${r.nom}</h3>
+                <p>${r.description}</p>
+                <div>
+                  <span class="badge">⭐ ${r.note}</span>
+                  <span class="badge">🕐 ${r.temps}</span>
+                  <span class="badge">${r.cuisine}</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>
+    `;
+  },
+  
+  renderMenu() {
+    const resto = DB.restaurants.find(r => r.id === this.selectedRestaurant);
+    if(!resto) return this.renderHome();
+    
+    const categories = [...new Set(resto.menu.map(i => i.categorie))];
+    
+    return `
+      <section class="section">
+        <button class="btn btn-secondary" onclick="app.render('home')" style="margin-bottom:20px">
+          ← Retour aux restaurants
+        </button>
+        <h2>${resto.nom}</h2>
+        <p style="text-align:center;color:#666;margin-bottom:40px;">
+          ${resto.description} • ⭐ ${resto.note} • 🕐 ${resto.temps}
+        </p>
+        
+        ${categories.map(cat => `
+          <div style="margin-bottom:50px;">
+            <h3 style="color:var(--bleu);font-size:1.8rem;margin-bottom:20px;border-bottom:3px solid var(--jaune);padding-bottom:10px;">
+              ${cat}
+            </h3>
+            ${resto.menu.filter(i => i.categorie === cat).map(item => `
+              <div class="menu-item">
+                <div class="menu-item-info">
+                  <h4>${item.nom}</h4>
+                  <p>${item.description}</p>
+                </div>
+                <div class="menu-item-price">${item.prix.toFixed(2)} $</div>
+                <button class="add-btn" onclick="app.addToCart(${JSON.stringify(resto).replace(/"/g, '&quot;')}, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                  Ajouter +
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </section>
+    `;
+  },
+  
+  renderCart() {
+    if(DB.cart.length === 0) {
+      return `
+        <div class="empty-state">
+          <div style="font-size:5rem;">🛒</div>
+          <h3>Votre panier est vide</h3>
+          <p style="color:#999;margin-bottom:30px;">Ajoutez des plats pour commencer</p>
+          <button class="btn" onclick="app.render('home')">Découvrir les restaurants</button>
+        </div>
+      `;
+    
