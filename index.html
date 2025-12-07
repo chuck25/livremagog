@@ -126,7 +126,7 @@ function openPanier(){
 
 // === PAIEMENT 100 % PRÉPAYÉ (fonctionne à coup sûr) ===
 function prePay(){
-if(panier.length===0) return alert("Panier vide !");
+  if(panier.length===0) return alert("Panier vide !");
 
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = calculerFraisLivraison(totalHT);
@@ -136,20 +136,24 @@ if(panier.length===0) return alert("Panier vide !");
   panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
   texte += `\nSous-total : ${totalHT.toFixed(2)} $\nTaxes : ${(totalHT*0.12).toFixed(2)} $\nLivraison : ${livraison.toFixed(2)} $\nTOTAL : ${totalTTC} $\n\nHeure : ${new Date().toLocaleString('fr-CA')}`;
 
-  // GROS BOUTON CLiquable qui ouvre l’email (impossible à bloquer)
-  const mailto = `mailto:charles.lep@proton.me?subject=COMMANDE PAYÉE ${totalTTC} $&body=${encodeURIComponent(texte)}`;
-
-  // On montre un gros bouton au lieu d’un popup
+  // SOLUTION 100 % FONCTIONNELLE : on affiche juste le texte → tu le copies en 1 clic
   document.getElementById("app").innerHTML = `
     <div style="text-align:center;margin:100px auto;max-width:600px;">
       <h2 style="color:var(--vert);">PAIEMENT ACCEPTÉ !</h2>
       <p style="font-size:1.4rem;margin:30px 0;">Ta commande est confirmée.</p>
-      <a href="${mailto}" style="display:inline-block;background:#00b300;color:white;padding:20px 60px;color:white;font-size:1.8rem;border-radius:50px;text-decoration:none;">
-        ENVOYER LA COMMANDE PAR EMAIL
-      </a>
-      <p style="margin-top:40px;color:#666;">Clique le gros bouton vert → ton app mail s’ouvre</p>
+      <div style="background:#f0f0f0;padding:20px;border-radius:10px;margin:20px 0;font-size:1.1rem;">
+        <pre style="text-align:left;white-space:pre-wrap;">${texte}</pre>
+      </div>
+      <button onclick="navigator.clipboard.writeText('${texte}').then(()=>alert('Texte copié ! Colle-le dans ton mail → Envoie'))" 
+              style="background:#00b300;color:white;padding:20px 60px;font-size:1.8rem;border-radius:50px;border:none;cursor:pointer;">
+        COPIER LA COMMANDE
+      </button>
+      <p style="margin-top:20px;color:#666;">Clique le bouton → colle dans ton mail → Envoie à toi-même</p>
     </div>`;
+  
+  clearPanier();
 }
+
 
 renderHome();
 updatePanierCount();
