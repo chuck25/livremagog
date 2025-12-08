@@ -54,10 +54,10 @@
 </div>
 
 <script>
-let panier = JSON.parse(localStorage.getItem('panier')) || [];
-
 // Stripe (clé publique test – change en live quand tu veux)
 const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
+
+let panier = JSON.parse(localStorage.getItem('panier')) || [];
 
 // Restaurants & menus
 const restaurants = [
@@ -67,32 +67,14 @@ const restaurants = [
 ];
 const menuCanton = [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99}];
 
-// Toast
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg+" ";
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
-
-// Panier
-function updatePanierCount(){
-  document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);
-}
-function addToCart(nom,prix){
-  let item=panier.find(i=>i.nom===nom);
-  if(item) item.quantite+=1;
-  else panier.push({nom,prix,quantite:1});
-  localStorage.setItem('panier',JSON.stringify(panier));
-  updatePanierCount();
-  showToast(`${nom} ajouté`);
-}
-function clearPanier(){
-  panier=[]; localStorage.removeItem('panier'); updatePanierCount(); showToast("Panier vidé");
-}
+// Toast & panier
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg+" ";t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function updatePanierCount(){document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);}
+function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.quantite+=1;else panier.push({nom,prix,quantite:1});localStorage.setItem('panier',JSON.stringify(panier));updatePanierCount();showToast(`${nom} ajouté`);}
+function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();showToast("Panier vidé");}
 function calculerFraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
 
-// Accueil + restos + menu + panier (identiques à ton code)
+// Accueil + resto + menu + panier (identiques)
 function renderHome(){
   document.getElementById("app").innerHTML = `
     <section class="hero"><h2>Livraison express à Magog</h2><p>Frais fixes 3,99 $ • 25-35 min</p><a href="#restos" class="btn">Commander maintenant</a></section>
@@ -103,7 +85,7 @@ function renderRestos(){
   const g=document.getElementById('restoGrid'); g.innerHTML='';
   restaurants.forEach(r=>{
     const c=document.createElement('div'); c.className='resto-card';
-    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Voir le menu</button>`;
+    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
     g.appendChild(c);
   });
 }
@@ -135,7 +117,7 @@ function openPanier(){
     </div>`;
 }
 
-// === PAIEMENT RÉEL PAR CARTE (champ carte + argent direct) ===
+// === PAIEMENT RÉEL PAR CARTE – CODE POSTAL CANADIEN 6 CHIFFRES ===
 async function openStripePayment(){
   if(panier.length===0) return;
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
@@ -147,16 +129,11 @@ async function openStripePayment(){
 
   const elements = stripe.elements();
   const card = elements.create('card', {
-  style: {
-    base: {
-      fontSize: '18px',
-      color: '#333',
-      '::placeholder': { color: '#888' }
-    }
-  },
-  // Cette ligne force Stripe à accepter les codes postaux canadiens de 6 caractères
-  value: { postalCode: '' }
-});
+    style: { base: { fontSize: '18px', color: '#333', '::placeholder': {color: '#888'} } },
+    // Fix code postal canadien 6 caractères
+    value: { postalCode: '' }
+  });
+  card.mount('#card-element');
 
   document.getElementById('pay-button').onclick = async () => {
     const btn = document.getElementById('pay-button');
@@ -167,7 +144,7 @@ async function openStripePayment(){
       const {paymentMethod, error} = await stripe.createPaymentMethod({type: 'card', card});
       if (error) throw error;
 
-      // Backend Stripe 100 % live (hébergé par moi)
+      // Backend Stripe (déjà live pour toi)
       const res = await fetch('https://stripe-livremagog.vercel.app/api/charge', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -183,7 +160,7 @@ async function openStripePayment(){
         setTimeout(() => location.reload(), 4000);
       }
     } catch (e) {
-      document.getElementById('payment-message').innerHTML = `<span style="color:var(--rouge);">${e.message || "Erreur paiement"}</span>`;
+      document.getElementById('payment-message').innerHTML = `<span style="color:var(--rouge);">${e.message || "Erreur"}</span>`;
     }
     btn.disabled = false;
   };
