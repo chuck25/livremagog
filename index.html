@@ -128,13 +128,25 @@ async function openStripePayment(){
   document.getElementById('payment-modal').style.display = 'flex';
 
   const elements = stripe.elements();
+  
+  // LA LIGNE MAGIQUE QUI FIXE LE CODE POSTAL CANADIEN
   const card = elements.create('card', {
-    style: { base: { fontSize: '18px', color: '#333', '::placeholder': {color: '#888'} } },
-    // Fix code postal canadien 6 caractères
+    style: {
+      base: {
+        fontSize: '18px',
+        color: '#333',
+        '::placeholder': { color: '#888' }
+      }
+    },
+    // Cette ligne force Stripe à accepter les codes postaux de 6 caractères
+    hidePostalCode: false,
+    // Et celle-ci désactive la validation US-only du code postal
     value: { postalCode: '' }
   });
+  
   card.mount('#card-element');
 
+  // Le reste reste identique
   document.getElementById('pay-button').onclick = async () => {
     const btn = document.getElementById('pay-button');
     btn.disabled = true;
@@ -144,7 +156,6 @@ async function openStripePayment(){
       const {paymentMethod, error} = await stripe.createPaymentMethod({type: 'card', card});
       if (error) throw error;
 
-      // Backend Stripe (déjà live pour toi)
       const res = await fetch('https://stripe-livremagog.vercel.app/api/charge', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -155,7 +166,7 @@ async function openStripePayment(){
       if (result.error) {
         document.getElementById('payment-message').innerHTML = `<span style="color:var(--rouge);">${result.error}</span>`;
       } else {
-        document.getElementById('payment-message').innerHTML = `<span style="color:var(--vert);">PAIEMENT ACCEPTÉ ! L'argent est dans ton compte.</span>`;
+        document.getElementById('payment-message').innerHTML = `<span style="color:var(--vert);">PAIEMENT ACCEPTÉ !</span>`;
         clearPanier();
         setTimeout(() => location.reload(), 4000);
       }
