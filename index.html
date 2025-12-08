@@ -146,8 +146,17 @@ async function openStripePayment(){
   document.getElementById('payment-modal').style.display = 'flex';
 
   const elements = stripe.elements();
-  const card = elements.create('card', {style: {base: {fontSize: '18px', color: '#333', '::placeholder': {color: '#888'}}}});
-  card.mount('#card-element');
+  const card = elements.create('card', {
+  style: {
+    base: {
+      fontSize: '18px',
+      color: '#333',
+      '::placeholder': { color: '#888' }
+    }
+  },
+  // Cette ligne force Stripe à accepter les codes postaux canadiens de 6 caractères
+  value: { postalCode: '' }
+});
 
   document.getElementById('pay-button').onclick = async () => {
     const btn = document.getElementById('pay-button');
