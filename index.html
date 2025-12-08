@@ -131,18 +131,10 @@ async function openStripePayment(){
   
   // LA LIGNE MAGIQUE QUI FIXE LE CODE POSTAL CANADIEN
   const card = elements.create('card', {
-    style: {
-      base: {
-        fontSize: '18px',
-        color: '#333',
-        '::placeholder': { color: '#888' }
-      }
-    },
-    // Cette ligne force Stripe à accepter les codes postaux de 6 caractères
-    hidePostalCode: false,
-    // Et celle-ci désactive la validation US-only du code postal
-    value: { postalCode: '' }
-  });
+  style: { base: { fontSize: '18px', color: '#333', '::placeholder': { color: '#888' } } },
+  // Fix : masque le champ code postal (pas obligatoire au Canada)
+  hidePostalCode: true
+});
   
   card.mount('#card-element');
 
