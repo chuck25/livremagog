@@ -28,9 +28,7 @@
     .vider-btn{background:var(--rouge);color:white;padding:12px 25px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;}
     .menu-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
     .bandeau{background:#d32f2f;color:white;text-align:center;padding:12px;font-weight:bold;position:fixed;top:60px;width:100%;z-index:999;}
-    .whatsapp-btn{position:fixed;bottom:80px;right:20px;background:#25D366;color:white;padding:18px;border-radius:50%;box-shadow:0 5px 15px rgba(0,0,0,0.3);z-index:998;font-size:30px;}
     .suivi{background:#003366;color:white;padding:30px;margin:60px auto;max-width:800px;border-radius:15px;display:none;}
-    .admin-btn{background:#003366;color:white;padding:12px 20px;border:none;border-radius:30px;margin:20px;cursor:pointer;}
   </style>
 </head>
 <body>
@@ -44,10 +42,8 @@
 <div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
 <div id="toast"></div>
 
-<a href="https://wa.me/18198474443" target="_blank" class="whatsapp-btn">WhatsApp</a>
-
 <div style="text-align:center;margin:40px;">
-  <button class="admin-btn" onclick="adminAccess()">Admin (toi seulement)</button>
+  <button onclick="adminAccess()" style="background:#003366;color:white;padding:12px 20px;border:none;border-radius:30px;">Admin (toi seulement)</button>
 </div>
 
 <div class="suivi" id="suivi">
@@ -58,15 +54,9 @@
 </div>
 
 <footer style="margin-top:80px;padding:30px;background:#003366;color:white;text-align:center;font-size:0.9rem;">
-  <p><strong>Livré Magog – Charles Lepage, travailleur autonome</strong></p>
+  <p><strong>Livré Magog – Charles Lepage</strong></p>
   <p>NEQ : [à remplir demain]</p>
-  <p>Magog (QC) – 819-847-4443 – charles.lep@proton.me</p>
-  <p style="margin-top:15px;">
-    <a href="conditions.html" style="color:#ffcc00;margin:0 10px;">Conditions</a> • 
-    <a href="confidentialite.html" style="color:#ffcc00;margin:0 10px;">Confidentialité</a> • 
-    <a href="remboursement.html" style="color:#ffcc00;margin:0 10px;">Remboursement</a>
-  </p>
-  <p style="margin-top:10px;">© 2025 Livré Magog</p>
+  <p>Magog (QC) – 819-847-4443</p>
 </footer>
 
 <script>
@@ -74,8 +64,8 @@
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// STRIPE (clé test – change en live avec ta vraie clé)
-const stripe = Stripe('pk_test_51SanA8Eb1K9QFuekWNl8nlH9g6OKaRdSMhHq3O1B028Trbef3q4gotXN9Ra2K0hHXpYZpdffee4hLgdvEemoU6pg00QJqRLFa3');
+// STRIPE CHECKOUT
+const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
 
 // Restaurants & menus
 const restaurants = [
@@ -139,27 +129,18 @@ function openPanier(){
     </div>`;
 }
 
-// PAIEMENT STRIPE AVANT WHATSAPP
+// PAIEMENT STRIPE CHECKOUT – SANS phone_number_collection
 function prePay(){
   if(panier.length===0) return;
-
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
 
   const lineItems = panier.map(i => ({
-    price_data: {
-      currency: 'cad',
-      product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') },
-      unit_amount: Math.round(i.prix * 100)
-    },
+    price_data: { currency: 'cad', product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') }, unit_amount: Math.round(i.prix * 100) },
     quantity: i.quantite || 1
   }));
-
   if(livraison > 0){
-    lineItems.push({
-      price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) },
-      quantity: 1
-    });
+    lineItems.push({ price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) }, quantity: 1 });
   }
 
   stripe.redirectToCheckout({
@@ -173,7 +154,6 @@ function prePay(){
   }).then(result => {
     if (result.error) showToast(result.error.message);
   });
-}
 }
 
 // ADMIN CACHÉ
