@@ -150,7 +150,7 @@ function prePay(){
     cancelUrl: window.location.origin,
     billingAddressCollection: 'required',
     shippingAddressCollection: { allowedCountries: ['CA'] },
-    phoneNumberCollection: { enabled: true }
+    phone_number_collection: { enabled: true }  // CORRIGÉ : underscore + camelCase
   }).then(result => {
     if (result.error) {
       showToast(result.error.message);
