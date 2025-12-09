@@ -42,6 +42,18 @@
 <div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
 <div id="toast"></div>
 
+<!-- ADMIN CACHÉ -->
+<div style="text-align:center;margin:40px;">
+  <button onclick="adminAccess()" style="background:#003366;color:white;padding:12px 20px;border:none;border-radius:30px;">Admin (toi seulement)</button>
+</div>
+
+<div class="suivi" id="suivi">
+  <h2>Suivi commandes du jour</h2>
+  <button onclick="showOrders()">Voir</button>
+  <button onclick="effacerSuivi()" style="background:#d32f2f;margin-left:15px;">Effacer</button>
+  <div id="orders"></div>
+</div>
+
 <footer style="margin-top:80px;padding:30px;background:#003366;color:white;text-align:center;font-size:0.9rem;">
   <p><strong>Livré Magog – Charles Lepage</strong></p>
   <p>NEQ : [à remplir demain]</p>
@@ -52,10 +64,10 @@
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// === TA CLÉ STRIPE (change en live quand tu veux) ===
+// STRIPE CHECKOUT
 const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
 
-// Restaurants & menus (tous les 3)
+// Restaurants & menus
 const restaurants = [
   {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
   {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
@@ -71,37 +83,65 @@ const menus = {
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 function updatePanierCount(){document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);}
 function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.quantite+=1;else panier.push({nom,prix,quantite:1});localStorage.setItem('panier',JSON.stringify(panier));updatePanierCount();showToast(`${nom} ajouté`);}
-function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();showToast("Panier vidé");}
+function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();}
 function fraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
 
-// Accueil + restos + panier
-function renderHome(){/* ton code habituel */}
-function renderRestos(){/* ton code habituel */}
-function openMenu(id,nom){/* ton code habituel */}
-function openPanier(){/* ton code habituel */}
+// Accueil
+function renderHome(){
+  document.getElementById("app").innerHTML = `
+    <section class="hero"><h2>Livraison express à Magog</h2><p>Frais fixes 3,99 $ • 25-35 min</p></section>
+    <section><h2 style="text-align:center;margin-bottom:30px;color:var(--bleu);">Restaurants</h2><div class="grid" id="restoGrid"></div></section>`;
+  renderRestos();
+}
+function renderRestos(){
+  const g=document.getElementById('restoGrid'); g.innerHTML='';
+  restaurants.forEach(r=>{
+    const c=document.createElement('div'); c.className='resto-card';
+    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
+    g.appendChild(c);
+  });
+}
+function openMenu(id){
+  const m = menus[id] || [];
+  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">${restaurants.find(r=>r.id===id).nom}</h2><div style="max-width:600px;margin:0 auto;">`;
+  m.forEach(i=>h+=`<div class="menu-item"><span style="flex:1;">${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
+    <button onclick="addToCart('${i.nom}',${i.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-size:1.2rem;">+</button></div>`);
+  h+=`</div><div style="text-align:center;margin:40px;"><button class="btn" onclick="renderHome()">Retour</button><button class="btn" onclick="openPanier()">Panier</button></div>`;
+  document.getElementById("app").innerHTML=h;
+}
+function openPanier(){
+  if(panier.length===0) return alert("Vide !");
+  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
+  const livraison = fraisLivraison(totalHT);
+  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
+  let liste = "";
+  panier.forEach(i=>liste+=`<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
+    <span>${i.quantite||1} × ${i.nom}</span><span>${(i.prix*(i.quantite||1)).toFixed(2)} $</span></div>`);
+  document.getElementById("app").innerHTML = `
+    <h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier</h2>
+    <div style="max-width:600px;margin:0 auto;">
+      ${liste}
+      <div style="background:#f0f0f0;padding:30px;border-radius:15px;text-align:center;">
+        <p style="font-size:2rem;font-weight:bold;color:var(--vert);">TOTAL : ${totalTTC} $</p>
+        <button class="btn" style="padding:20px 60px;font-size:1.8rem;" onclick="prePay()">PAYER PAR CARTE</button>
+        <button class="vider-btn" style="margin-top:20px;" onclick="clearPanier()">Vider</button>
+      </div>
+    </div>`;
+}
 
-// === PAIEMENT STRIPE CHECKOUT (100 % fiable) ===
+// PAIEMENT STRIPE CHECKOUT
 function prePay(){
-  if(panier.length===0) return alert("Panier vide !");
-
+  if(panier.length===0) return;
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
   const totalTTC = Math.round((totalHT * 1.12 + livraison) * 100);
 
   const lineItems = panier.map(i => ({
-    price_data: {
-      currency: 'cad',
-      product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') },
-      unit_amount: Math.round(i.prix * 100)
-    },
+    price_data: { currency: 'cad', product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') }, unit_amount: Math.round(i.prix * 100) },
     quantity: i.quantite || 1
   }));
-
   if(livraison > 0){
-    lineItems.push({
-      price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) },
-      quantity: 1
-    });
+    lineItems.push({ price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) }, quantity: 1 });
   }
 
   stripe.redirectToCheckout({
@@ -112,18 +152,29 @@ function prePay(){
     billingAddressCollection: 'required',
     shippingAddressCollection: { allowedCountries: ['CA'] },
     phoneNumberCollection: { enabled: true }
-  }).then(result => {
-    if (result.error) alert(result.error.message);
   });
-
-  // Sauvegarde locale (pour ton suivi)
-  commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:(totalTTC/100).toFixed(2)});
-  localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
-  clearPanier();
 }
 
-// Le reste de ton code (admin caché, suivi, etc.) reste identique
+// ADMIN CACHÉ
+function adminAccess(){
+  const pass = prompt("Mot de passe admin ?");
+  if(pass === "magog2025"){
+    document.getElementById("suivi").style.display = "block";
+    showOrders();
+  }
+}
+function showOrders(){
+  if(commandes.length===0) return document.getElementById('orders').innerHTML = "<p>Aucune commande aujourd'hui</p>";
+  let html = "<ul>";
+  commandes.forEach(c => html += `<li><strong>${c.heure}</strong> – ${c.items.map(i=>i.nom).join(', ')} – ${c.total} $</li>`);
+  html += "</ul>";
+  document.getElementById('orders').innerHTML = html;
+}
+function effacerSuivi(){
+  if(confirm("Effacer ?")){ commandes = []; localStorage.setItem('commandesDuJour',JSON.stringify(commandes)); showOrders(); }
+}
 
+// Démarrage
 renderHome();
 updatePanierCount();
 </script>
