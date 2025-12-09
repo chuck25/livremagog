@@ -142,16 +142,24 @@ function openPanier(){
 // PAIEMENT STRIPE AVANT WHATSAPP
 function prePay(){
   if(panier.length===0) return;
+
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
-  const totalTTC = Math.round((totalHT * 1.12 + livraison) * 100);
 
   const lineItems = panier.map(i => ({
-    price_data: { currency: 'cad', product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') }, unit_amount: Math.round(i.prix * 100) },
+    price_data: {
+      currency: 'cad',
+      product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') },
+      unit_amount: Math.round(i.prix * 100)
+    },
     quantity: i.quantite || 1
   }));
+
   if(livraison > 0){
-    lineItems.push({ price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) }, quantity: 1 });
+    lineItems.push({
+      price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) },
+      quantity: 1
+    });
   }
 
   stripe.redirectToCheckout({
@@ -161,20 +169,11 @@ function prePay(){
     cancelUrl: window.location.origin,
     billingAddressCollection: 'required',
     shippingAddressCollection: { allowedCountries: ['CA'] },
-    phone_number_collection: { enabled: true },
     locale: 'fr'
   }).then(result => {
-    if (result.error) {
-      showToast("Erreur paiement : " + result.error.message);
-    } else {
-      // PAIEMENT RÉUSSI → envoie WhatsApp avec la commande
-      const texte = panier.map(i => `${i.quantite||1} × ${i.nom}`).join('\n') + `\nTOTAL PAYÉ : ${(totalTTC/100).toFixed(2)} $`;
-      window.location.href = `https://wa.me/18198474443?text=${encodeURIComponent("Commande payée !\n" + texte + "\n\nAdresse + cell svp ?")}`;
-      commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:(totalTTC/100).toFixed(2)});
-      localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
-      clearPanier();
-    }
+    if (result.error) showToast(result.error.message);
   });
+}
 }
 
 // ADMIN CACHÉ
