@@ -132,19 +132,33 @@ function openPanier(){
 // PAIEMENT STRIPE CHECKOUT – SANS phone_number_collection
 function prePay(){
   if(panier.length===0) return;
+
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
 
+  // On crée les items "à la volée" avec name + unit_amount (syntaxe acceptée)
   const lineItems = panier.map(i => ({
-    price_data: { currency: 'cad', product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') }, unit_amount: Math.round(i.prix * 100) },
-    quantity: i.quantite || 1
+    price_data: {
+      currency: 'cad',
+      product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') },
+      unit_amount: Math.round(i.prix * 100)
+    },
+    quantity: 1
   }));
+
   if(livraison > 0){
-    lineItems.push({ price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) }, quantity: 1 });
+    lineItems.push({
+      price_data: {
+        currency: 'cad',
+        product_data: { name: 'Livraison' },
+        unit_amount: Math.round(livraison * 100)
+      },
+      quantity: 1
+    });
   }
 
   stripe.redirectToCheckout({
-    lineItems,
+    lineItems: lineItems,
     mode: 'payment',
     successUrl: window.location.origin + '?success=1',
     cancelUrl: window.location.origin,
