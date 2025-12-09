@@ -121,27 +121,21 @@ function prePay(){
   commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:totalTTC});
   localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
 
-  // 1. Mail (principal)
-  const mailto = `mailto:charles.lep@proton.me?subject=COMMANDE PAYÉE ${totalTTC} $&body=${encodeURIComponent(texte)}`;
-  
-  // 2. WhatsApp backup (si mail bloqué)
-  const whatsapp = `https://wa.me/18198474443?text=${encodeURIComponent(texte)}`;
+  // GROS BOUTON VERT WHATSAPP qui marche TOUJOURS
+  const whatsappURL = `https://wa.me/18198474443?text=${encodeURIComponent(texte)}`;
 
-  // Essaie d'ouvrir le mail
-  const mailWindow = window.open(mailto, '_blank');
-
-  // Si le mail est bloqué (presque toujours sur ordi), on ouvre WhatsApp après 800 ms
-  setTimeout(() => {
-    if (!mailWindow || mailWindow.closed || typeof mailWindow.closed === 'undefined') {
-      alert("Ton mail est bloqué ? Pas grave, on passe par WhatsApp en 1 clic →");
-      window.open(whatsapp, '_blank');
-    } else {
-      alert("PAIEMENT ACCEPTÉ ! Ton mail s’ouvre – réponds avec ton adresse + cell");
-    }
-  }, 800);
+  // On affiche un gros bouton WhatsApp + message clair
+  document.getElementById("app").innerHTML = `
+    <div style="text-align:center;margin:100px auto;max-width:600px;">
+      <h2 style="color:#00b300;">PAIEMENT ACCEPTÉ !</h2>
+      <p style="font-size:1.5rem;margin:30px 0;">Envoie-moi ta commande en 1 clic :</p>
+      <a href="${whatsappURL}" target="_blank" style="display:inline-block;background:#25D366;color:white;padding:20px 60px;border-radius:50px;font-size:1.8rem;text-decoration:none;">
+        ENVOYER PAR WHATSAPP
+      </a>
+      <p style="margin-top:30px;color:#666;">(ou réponds à l’email si tu l’as reçu)</p>
+    </div>`;
 
   clearPanier();
-  renderHome();
 }
 
 // Suivi de commandes (toi seulement)
