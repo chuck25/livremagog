@@ -62,7 +62,7 @@ function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.q
 function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();showToast("Panier vidé");}
 function fraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
 
-// Accueil + menus + panier (identiques à ta version qui marchait)
+// Accueil + menus + panier
 function renderHome(){
   document.getElementById("app").innerHTML = `
     <section class="hero"><h2>Livraison express à Magog</h2><p>Frais fixes 3,99 $ • 25-35 min</p><a href="#restos" class="btn">Commander maintenant</a></section>
@@ -140,7 +140,7 @@ function prePay(){
 
 // Suivi de commandes (toi seulement)
 function showOrders(){
-  if(commandes.length===0) return document.getElementById('orders').innerHTML = "<p>Aucune commande aujourd’hui</p>";
+  if(commandes.length===0) return document.getElementById('orders').innerHTML = "<p>Aucune commande aujourd'hui</p>";
   let html = "<ul>";
   commandes.forEach(c => html += `<li><strong>${c.heure}</strong> – ${c.items.map(i=>i.nom).join(', ')} – ${c.total} $</li>`);
   html += "</ul>";
