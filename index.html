@@ -107,7 +107,8 @@ function openPanier(){
 
 // === PAIEMENT PRÉPAYÉ (mail + WhatsApp backup) ===
 function prePay(){
-  if(panier.length===0) return;
+  if(panier.length===0) return alert("Panier vide !");
+
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
   const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
@@ -116,23 +117,28 @@ function prePay(){
   panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
   texte += `\nTOTAL : ${totalTTC} $\n\nPeux-tu me donner ton adresse complète + ton cell ? (ex: 123 rue des Pins, Magog – 819-555-1234)`;
 
-  // Sauvegarde pour ton suivi
+  // Sauvegarde ton suivi
   commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:totalTTC});
   localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
 
-  // Mail + WhatsApp backup
+  // 1. Mail (principal)
   const mailto = `mailto:charles.lep@proton.me?subject=COMMANDE PAYÉE ${totalTTC} $&body=${encodeURIComponent(texte)}`;
+  
+  // 2. WhatsApp backup (si mail bloqué)
   const whatsapp = `https://wa.me/18198474443?text=${encodeURIComponent(texte)}`;
 
-  const opened = window.open(mailto, '_blank');
-  if (!opened || opened.closed) {
-    setTimeout(() => {
-      alert("Mail bloqué ? Envoie-moi ta commande par WhatsApp en 1 clic →");
+  // Essaie d'ouvrir le mail
+  const mailWindow = window.open(mailto, '_blank');
+
+  // Si le mail est bloqué (presque toujours sur ordi), on ouvre WhatsApp après 800 ms
+  setTimeout(() => {
+    if (!mailWindow || mailWindow.closed || typeof mailWindow.closed === 'undefined') {
+      alert("Ton mail est bloqué ? Pas grave, on passe par WhatsApp en 1 clic →");
       window.open(whatsapp, '_blank');
-    }, 500);
-  } else {
-    alert("PAIEMENT ACCEPTÉ ! Ton mail s’ouvre – réponds avec ton adresse + cell");
-  }
+    } else {
+      alert("PAIEMENT ACCEPTÉ ! Ton mail s’ouvre – réponds avec ton adresse + cell");
+    }
+  }, 800);
 
   clearPanier();
   renderHome();
