@@ -42,7 +42,6 @@
 <div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
 <div id="toast"></div>
 
-<!-- ADMIN CACHÉ -->
 <div style="text-align:center;margin:40px;">
   <button onclick="adminAccess()" style="background:#003366;color:white;padding:12px 20px;border:none;border-radius:30px;">Admin (toi seulement)</button>
 </div>
@@ -64,7 +63,7 @@
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// STRIPE CHECKOUT (clé test – change en live avec ta clé)
+// STRIPE CHECKOUT
 const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
 
 // Restaurants & menus
@@ -156,7 +155,6 @@ function prePay(){
     if (result.error) {
       showToast(result.error.message);
     } else {
-      // Sauvegarde locale
       commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:(totalTTC/100).toFixed(2)});
       localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
       clearPanier();
