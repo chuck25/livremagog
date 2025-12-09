@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Livré Magog – Livraison express</title>
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     :root{--bleu:#003366;--jaune:#ffcc00;--vert:#00b300;--rouge:#d32f2f;}
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
@@ -35,7 +36,7 @@
 <body>
 
 <div class="bandeau">
-  OUVERT VENDREDI & SAMEDI 17h-22h30 – Livraison 3,99 $ – Code MAGOG1 = 2 $ de rabais (20 premiers)
+  OUVERT VENDREDI & SAMEDI 17h-22h30 – Livraison 3,99 $
 </div>
 
 <header><h1>Livré Magog</h1></header>
@@ -69,40 +70,30 @@
 </footer>
 
 <script>
+// Panier + commandes locales
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// Restaurants
+// STRIPE (clé test – change en live avec ta vraie clé)
+const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
+
+// Restaurants & menus
 const restaurants = [
   {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
   {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
   {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
 ];
-
-// Menus COMPLÈTES pour TOUS les restos
 const menus = {
-  canton: [
-    {nom:"Poutine classique",prix:14.99},
-    {nom:"Burger Canton",prix:18.99},
-    {nom:"Fish & Chips",prix:19.99}
-  ],
-  memphre: [
-    {nom:"Salade César",prix:12.99},
-    {nom:"Sandwich au poulet",prix:14.99},
-    {nom:"Soupe du jour",prix:9.99}
-  ],
-  pizza: [
-    {nom:"Pizza Margherita",prix:15.99},
-    {nom:"Pizza Pepperoni",prix:17.99},
-    {nom:"Calzone",prix:16.99}
-  ]
+  canton: [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99}],
+  memphre: [{nom:"Salade César",prix:12.99},{nom:"Sandwich au poulet",prix:14.99},{nom:"Soupe du jour",prix:9.99}],
+  pizza: [{nom:"Pizza Margherita",prix:15.99},{nom:"Pizza Pepperoni",prix:17.99},{nom:"Calzone",prix:16.99}]
 };
 
 // Toast & panier
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg+" ";t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 function updatePanierCount(){document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);}
 function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.quantite+=1;else panier.push({nom,prix,quantite:1});localStorage.setItem('panier',JSON.stringify(panier));updatePanierCount();showToast(`${nom} ajouté`);}
-function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();showToast("Panier vidé");}
+function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();}
 function fraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
 
 // Accueil + restos
@@ -116,13 +107,13 @@ function renderRestos(){
   const g=document.getElementById('restoGrid'); g.innerHTML='';
   restaurants.forEach(r=>{
     const c=document.createElement('div'); c.className='resto-card';
-    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}','${r.nom}')">Menu</button>`;
+    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
     g.appendChild(c);
   });
 }
-function openMenu(id, nom){
+function openMenu(id){
   const m = menus[id] || [];
-  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">${nom}</h2><div style="max-width:600px;margin:0 auto;">`;
+  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">${restaurants.find(r=>r.id===id).nom}</h2><div style="max-width:600px;margin:0 auto;">`;
   m.forEach(i=>h+=`<div class="menu-item"><span style="flex:1;">${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
     <button onclick="addToCart('${i.nom}',${i.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-size:1.2rem;">+</button></div>`);
   h+=`</div><div style="text-align:center;margin:40px;"><button class="btn" onclick="renderHome()">Retour</button><button class="btn" onclick="openPanier()">Panier</button></div>`;
@@ -148,30 +139,42 @@ function openPanier(){
     </div>`;
 }
 
-// PAIEMENT → WHATSAPP GARANTI (pas de Stripe pour éviter les bugs)
+// PAIEMENT STRIPE AVANT WHATSAPP
 function prePay(){
   if(panier.length===0) return;
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
-  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
+  const totalTTC = Math.round((totalHT * 1.12 + livraison) * 100);
 
-  let texte = `COMMANDE PAYÉE – Livré Magog\n\n`;
-  panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
-  texte += `\nTOTAL : ${totalTTC} $\n\nPeux-tu me donner ton adresse complète + ton cell ?`;
+  const lineItems = panier.map(i => ({
+    price_data: { currency: 'cad', product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') }, unit_amount: Math.round(i.prix * 100) },
+    quantity: i.quantite || 1
+  }));
+  if(livraison > 0){
+    lineItems.push({ price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) }, quantity: 1 });
+  }
 
-  commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:totalTTC});
-  localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
-
-  document.getElementById("app").innerHTML = `
-    <div style="text-align:center;margin:100px auto;max-width:600px;">
-      <h2 style="color:#00b300;">PAIEMENT ACCEPTÉ !</h2>
-      <p style="font-size:1.5rem;margin:30px 0;">Envoie-moi ta commande en 1 clic :</p>
-      <a href="https://wa.me/18198474443?text=${encodeURIComponent(texte)}" target="_blank" style="display:inline-block;background:#25D366;color:white;padding:25px 80px;border-radius:50px;font-size:2rem;text-decoration:none;">
-        WHATSAPP
-      </a>
-    </div>`;
-
-  clearPanier();
+  stripe.redirectToCheckout({
+    lineItems,
+    mode: 'payment',
+    successUrl: window.location.origin + '?success=1',
+    cancelUrl: window.location.origin,
+    billingAddressCollection: 'required',
+    shippingAddressCollection: { allowedCountries: ['CA'] },
+    phone_number_collection: { enabled: true },
+    locale: 'fr'
+  }).then(result => {
+    if (result.error) {
+      showToast("Erreur paiement : " + result.error.message);
+    } else {
+      // PAIEMENT RÉUSSI → envoie WhatsApp avec la commande
+      const texte = panier.map(i => `${i.quantite||1} × ${i.nom}`).join('\n') + `\nTOTAL PAYÉ : ${(totalTTC/100).toFixed(2)} $`;
+      window.location.href = `https://wa.me/18198474443?text=${encodeURIComponent("Commande payée !\n" + texte + "\n\nAdresse + cell svp ?")}`;
+      commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:(totalTTC/100).toFixed(2)});
+      localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
+      clearPanier();
+    }
+  });
 }
 
 // ADMIN CACHÉ
@@ -190,11 +193,7 @@ function showOrders(){
   document.getElementById('orders').innerHTML = html;
 }
 function effacerSuivi(){
-  if(confirm("Effacer le suivi du jour ?")){
-    commandes = [];
-    localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
-    document.getElementById('orders').innerHTML = "<p>Suivi effacé !</p>";
-  }
+  if(confirm("Effacer ?")){ commandes = []; localStorage.setItem('commandesDuJour',JSON.stringify(commandes)); showOrders(); }
 }
 
 // Démarrage
