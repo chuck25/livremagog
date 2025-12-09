@@ -64,7 +64,7 @@
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// STRIPE CHECKOUT
+// STRIPE CHECKOUT (clé test – change en live avec ta clé)
 const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
 
 // Restaurants & menus
@@ -83,7 +83,7 @@ const menus = {
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 function updatePanierCount(){document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);}
 function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.quantite+=1;else panier.push({nom,prix,quantite:1});localStorage.setItem('panier',JSON.stringify(panier));updatePanierCount();showToast(`${nom} ajouté`);}
-function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();}
+function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();showToast("Panier vidé");}
 function fraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
 
 // Accueil
@@ -152,6 +152,15 @@ function prePay(){
     billingAddressCollection: 'required',
     shippingAddressCollection: { allowedCountries: ['CA'] },
     phoneNumberCollection: { enabled: true }
+  }).then(result => {
+    if (result.error) {
+      showToast(result.error.message);
+    } else {
+      // Sauvegarde locale
+      commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:(totalTTC/100).toFixed(2)});
+      localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
+      clearPanier();
+    }
   });
 }
 
