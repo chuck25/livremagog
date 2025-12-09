@@ -28,6 +28,7 @@
     .vider-btn{background:var(--rouge);color:white;padding:12px 25px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;}
     .menu-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
     .bandeau{background:#d32f2f;color:white;text-align:center;padding:12px;font-weight:bold;position:fixed;top:60px;width:100%;z-index:999;}
+    .suivi{background:#003366;color:white;padding:30px;margin:60px auto;max-width:800px;border-radius:15px;display:none;}
   </style>
 </head>
 <body>
@@ -41,6 +42,17 @@
 <div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
 <div id="toast"></div>
 
+<div style="text-align:center;margin:40px;">
+  <button onclick="adminAccess()" style="background:#003366;color:white;padding:12px 20px;border:none;border-radius:30px;">Admin (toi seulement)</button>
+</div>
+
+<div class="suivi" id="suivi">
+  <h2>Suivi commandes du jour</h2>
+  <button onclick="showOrders()">Voir</button>
+  <button onclick="effacerSuivi()" style="background:#d32f2f;margin-left:15px;">Effacer</button>
+  <div id="orders"></div>
+</div>
+
 <footer style="margin-top:80px;padding:30px;background:#003366;color:white;text-align:center;font-size:0.9rem;">
   <p><strong>Livré Magog – Charles Lepage</strong></p>
   <p>NEQ : [à remplir demain]</p>
@@ -48,9 +60,11 @@
 </footer>
 
 <script>
+// Panier + commandes locales
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
+let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// STRIPE (clé test – passe en live quand tu veux)
+// STRIPE CHECKOUT
 const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
 
 // Restaurants & menus complets
@@ -61,9 +75,9 @@ const restaurants = [
 ];
 const menus = {
   canton: [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99}],
-  memphre: [{nom:"Salade César",prix:12.99},{nom:"Sandwich poulet",prix:14.99},{nom:"Soupe du jour",prix:9.99}],
+  memphre: [{nom:"Salade César",prix:12.99},{nom:"Sandwich au poulet",prix:14.99},{nom:"Soupe du jour",prix:9.99}],
   pizza: [{nom:"Pizza Margherita",prix:15.99},{nom:"Pizza Pepperoni",prix:17.99},{nom:"Calzone",prix:16.99}]
-};
+];
 
 // Toast & panier
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
@@ -115,48 +129,51 @@ function openPanier(){
     </div>`;
 }
 
-// PAIEMENT STRIPE CHECKOUT – 100 % CORRIGÉ
+// PAIEMENT STRIPE CHECKOUT
 function prePay(){
   if(panier.length===0) return;
-
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
 
   const lineItems = panier.map(i => ({
-    price_data: {
-      currency: 'cad',
-      product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') },
-      unit_amount: Math.round(i.prix * 100)
-    },
+    price_data: { currency: 'cad', product_data: { name: i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '') }, unit_amount: Math.round(i.prix * 100) },
     quantity: i.quantite || 1
   }));
-
   if(livraison > 0){
-    lineItems.push({
-      price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) },
-      quantity: 1
-    });
+    lineItems.push({ price_data: { currency: 'cad', product_data: { name: 'Livraison' }, unit_amount: Math.round(livraison * 100) }, quantity: 1 });
   }
 
   stripe.redirectToCheckout({
-    lineItems: lineItems,
+    lineItems,
     mode: 'payment',
     successUrl: window.location.origin + '?success=1',
     cancelUrl: window.location.origin,
     billingAddressCollection: 'required',
     shippingAddressCollection: { allowedCountries: ['CA'] },
-    phone_number_collection: { enabled: true }, // CORRIGÉ
+    phone_number_collection: { enabled: true },
     locale: 'fr'
   }).then(result => {
-    if (result.error) {
-      showToast("Erreur : " + result.error.message);
-    }
+    if (result.error) showToast(result.error.message);
   });
+}
 
-  // Sauvegarde locale pour ton suivi
-  commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:totalTTC/100).toFixed(2)});
-  localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
-  clearPanier();
+// ADMIN CACHÉ
+function adminAccess(){
+  const pass = prompt("Mot de passe admin ?");
+  if(pass === "magog2025"){
+    document.getElementById("suivi").style.display = "block";
+    showOrders();
+  }
+}
+function showOrders(){
+  if(commandes.length===0) return document.getElementById('orders').innerHTML = "<p>Aucune commande aujourd'hui</p>";
+  let html = "<ul>";
+  commandes.forEach(c => html += `<li><strong>${c.heure}</strong> – ${c.items.map(i=>i.nom).join(', ')} – ${c.total} $</li>`);
+  html += "</ul>";
+  document.getElementById('orders').innerHTML = html;
+}
+function effacerSuivi(){
+  if(confirm("Effacer ?")){ commandes = []; localStorage.setItem('commandesDuJour',JSON.stringify(commandes)); showOrders(); }
 }
 
 // Démarrage
