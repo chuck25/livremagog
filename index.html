@@ -34,7 +34,6 @@
 </head>
 <body>
 
-<!-- BANDEAU HEURES (remplace le gros bouton jaune) -->
 <div class="bandeau">
   OUVERT VENDREDI & SAMEDI 17h-22h30 – Livraison 3,99 $ – Code MAGOG1 = 2 $ de rabais (20 premiers)
 </div>
@@ -46,10 +45,10 @@
 
 <a href="https://wa.me/18198474443" target="_blank" class="whatsapp-btn">WhatsApp</a>
 
-<!-- ADMIN CACHÉ -->
 <div style="text-align:center;margin:40px;">
   <button class="admin-btn" onclick="adminAccess()">Admin (toi seulement)</button>
 </div>
+
 <div class="suivi" id="suivi">
   <h2>Suivi commandes du jour</h2>
   <button onclick="showOrders()">Voir</button>
@@ -73,22 +72,114 @@
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// === TOUTES LES FONCTIONS (resto, panier, paiement WhatsApp, suivi caché) ===
-// (identiques à la version précédente – je te les remets si besoin, mais elles sont déjà dans ton code)
+// Restaurants
+const restaurants = [
+  {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
+  {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
+  {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
+];
+const menuCanton = [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99}];
 
+// Toast & panier
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg+" ";t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function updatePanierCount(){document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);}
+function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.quantite+=1;else panier.push({nom,prix,quantite:1});localStorage.setItem('panier',JSON.stringify(panier));updatePanierCount();showToast(`${nom} ajouté`);}
+function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();showToast("Panier vidé");}
+function fraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
+
+// Accueil + restos
 function renderHome(){
   document.getElementById("app").innerHTML = `
-    <section class="hero">
-      <h2>Livraison express à Magog</h2>
-      <p>Frais fixes 3,99 $ • 25-35 min</p>
-      <!-- PLUS DE GROS BOUTON JAUNE ICI -->
-    </section>
-    <section><h2 style="text-align:center;margin-bottom:30px;color:var(--bleu);">Choisis ton resto</h2><div class="grid" id="restoGrid"></div></section>`;
+    <section class="hero"><h2>Livraison express à Magog</h2><p>Frais fixes 3,99 $ • 25-35 min</p></section>
+    <section><h2 style="text-align:center;margin-bottom:30px;color:var(--bleu);">Restaurants</h2><div class="grid" id="restoGrid"></div></section>`;
   renderRestos();
 }
+function renderRestos(){
+  const g=document.getElementById('restoGrid'); g.innerHTML='';
+  restaurants.forEach(r=>{
+    const c=document.createElement('div'); c.className='resto-card';
+    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
+    g.appendChild(c);
+  });
+}
+function openMenu(id){
+  const m = id==="canton"?menuCanton:[];
+  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">Canton Brasse</h2><div style="max-width:600px;margin:0 auto;">`;
+  m.forEach(i=>h+=`<div class="menu-item"><span style="flex:1;">${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
+    <button onclick="addToCart('${i.nom}',${i.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-size:1.2rem;">+</button></div>`);
+  h+=`</div><div style="text-align:center;margin:40px;"><button class="btn" onclick="renderHome()">Retour</button><button class="btn" onclick="openPanier()">Panier</button></div>`;
+  document.getElementById("app").innerHTML=h;
+}
+function openPanier(){
+  if(panier.length===0) return alert("Vide !");
+  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
+  const livraison = fraisLivraison(totalHT);
+  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
+  let liste = "";
+  panier.forEach(i=>liste+=`<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
+    <span>${i.quantite||1} × ${i.nom}</span><span>${(i.prix*(i.quantite||1)).toFixed(2)} $</span></div>`);
+  document.getElementById("app").innerHTML = `
+    <h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier</h2>
+    <div style="max-width:600px;margin:0 auto;">
+      ${liste}
+      <div style="background:#f0f0f0;padding:30px;border-radius:15px;text-align:center;">
+        <p style="font-size:2rem;font-weight:bold;color:var(--vert);">TOTAL : ${totalTTC} $</p>
+        <button class="btn" style="padding:20px 60px;font-size:1.8rem;" onclick="prePay()">PAYER PAR CARTE</button>
+        <button class="vider-btn" style="margin-top:20px;" onclick="clearPanier()">Vider</button>
+      </div>
+    </div>`;
+}
 
-// Le reste du code (renderRestos, openMenu, openPanier, prePay, adminAccess, etc.) reste IDENTIQUE à ta version actuelle
+// Paiement → WhatsApp garanti
+function prePay(){
+  if(panier.length===0) return;
+  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
+  const livraison = fraisLivraison(totalHT);
+  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
 
+  let texte = `COMMANDE PAYÉE – Livré Magog\n\n`;
+  panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
+  texte += `\nTOTAL : ${totalTTC} $\n\nAdresse + cell svp ?`;
+
+  commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:totalTTC});
+  localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
+
+  document.getElementById("app").innerHTML = `
+    <div style="text-align:center;margin:100px auto;max-width:600px;">
+      <h2 style="color:#00b300;">PAIEMENT ACCEPTÉ !</h2>
+      <p style="font-size:1.5rem;margin:30px 0;">Envoie-moi ta commande en 1 clic :</p>
+      <a href="https://wa.me/18198474443?text=${encodeURIComponent(texte)}" target="_blank" style="display:inline-block;background:#25D366;color:white;padding:25px 80px;border-radius:50px;font-size:2rem;text-decoration:none;">
+        WHATSAPP
+      </a>
+    </div>`;
+
+  clearPanier();
+}
+
+// Admin caché
+function adminAccess(){
+  const pass = prompt("Mot de passe admin ?");
+  if(pass === "magog2025"){
+    document.getElementById("suivi").style.display = "block";
+    showOrders();
+  }
+}
+function showOrders(){
+  if(commandes.length===0) return document.getElementById('orders').innerHTML = "<p>Aucune commande aujourd'hui</p>";
+  let html = "<ul>";
+  commandes.forEach(c => html += `<li><strong>${c.heure}</strong> – ${c.items.map(i=>i.nom).join(', ')} – ${c.total} $</li>`);
+  html += "</ul>";
+  document.getElementById('orders').innerHTML = html;
+}
+function effacerSuivi(){
+  if(confirm("Effacer le suivi du jour ?")){
+    commandes = [];
+    localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
+    document.getElementById('orders').innerHTML = "<p>Suivi effacé !</p>";
+  }
+}
+
+// Démarrage
 renderHome();
 updatePanierCount();
 </script>
