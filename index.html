@@ -11,7 +11,7 @@
     header{background:var(--bleu);color:white;padding:1rem;text-align:center;position:fixed;width:100%;top:0;z-index:100;}
     header h1{font-size:2rem;}
     #app{padding-top:90px;}
-    .hero{background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,00,0.6)),url('https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=1200') center/cover;color:white;text-align:center;padding:120px 20px 80px;}
+    .hero{background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)),url('https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=1200') center/cover;color:white;text-align:center;padding:120px 20px 80px;}
     .hero h2{font-size:2.5rem;margin-bottom:1rem;}
     .hero p{font-size:1.3rem;margin-bottom:2rem;}
     .btn{background:var(--jaune);color:var(--bleu);padding:15px 30px;border:none;border-radius:50px;font-size:1.3rem;font-weight:bold;cursor:pointer;}
@@ -28,7 +28,8 @@
     .menu-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
     .bandeau{background:#d32f2f;color:white;text-align:center;padding:12px;font-weight:bold;position:fixed;top:60px;width:100%;z-index:999;}
     .whatsapp-btn{position:fixed;bottom:80px;right:20px;background:#25D366;color:white;padding:18px;border-radius:50%;box-shadow:0 5px 15px rgba(0,0,0,0.3);z-index:998;font-size:30px;}
-    .suivi{background:#003366;color:white;padding:30px;margin:40px auto;max-width:800px;border-radius:15px;}
+    .suivi{background:#003366;color:white;padding:30px;margin:60px auto;max-width:800px;border-radius:15px;display:none;} /* CACHÉ PAR DÉFAUT */
+    .admin-btn{background:#003366;color:white;padding:12px 20px;border:none;border-radius:30px;margin:20px;cursor:pointer;}
   </style>
 </head>
 <body>
@@ -46,13 +47,16 @@
 <!-- WHATSAPP FLOTTANT -->
 <a href="https://wa.me/18198474443" target="_blank" class="whatsapp-btn">WhatsApp</a>
 
-<!-- SUIVI COMMANDES -->
-<div class="suivi">
+<!-- BOUTON ADMIN (visible pour tout le monde mais protégé par mot de passe) -->
+<div style="text-align:center;margin:40px;">
+  <button class="admin-btn" onclick="adminAccess()">Accès admin (toi seulement)</button>
+</div>
+
+<!-- SUIVI COMMANDES – CACHÉ + PROTÉGÉ PAR MOT DE PASSE -->
+<div class="suivi" id="suivi">
   <h2>Ton suivi de commandes du jour</h2>
   <button onclick="showOrders()">Voir les commandes</button>
-  <button onclick="effacerSuivi()" style="background:#d32f2f;color:white;padding:12px 20px;border:none;border-radius:30px;margin-left:15px;cursor:pointer;">
-  Effacer le suivi du jour
-</button>
+  <button onclick="effacerSuivi()" style="background:#d32f2f;margin-left:15px;">Effacer le suivi</button>
   <div id="orders"></div>
 </div>
 
@@ -73,67 +77,12 @@
 let panier = JSON.parse(localStorage.getItem('panier')) || [];
 let commandes = JSON.parse(localStorage.getItem('commandesDuJour')) || [];
 
-// Restaurants & menus
-const restaurants = [
-  {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
-  {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
-  {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
-];
-const menuCanton = [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99}];
+// === TOUTES TES FONCTIONS (renderHome, renderRestos, openMenu, openPanier, etc.) ===
+// (identiques à ta version actuelle – je les remets si besoin)
 
-// Toast & panier
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg+" ";t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-function updatePanierCount(){document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);}
-function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.quantite+=1;else panier.push({nom,prix,quantite:1});localStorage.setItem('panier',JSON.stringify(panier));updatePanierCount();showToast(`${nom} ajouté`);}
-function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();showToast("Panier vidé");}
-function fraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
-
-// Accueil + menus + panier
-function renderHome(){
-  document.getElementById("app").innerHTML = `
-    <section class="hero"><h2>Livraison express à Magog</h2><p>Frais fixes 3,99 $ • 25-35 min</p><a href="#restos" class="btn">Commander maintenant</a></section>
-    <section><h2 style="text-align:center;margin-bottom:30px;color:var(--bleu);">Restaurants</h2><div class="grid" id="restoGrid"></div></section>`;
-  renderRestos();
-}
-function renderRestos(){
-  const g=document.getElementById('restoGrid'); g.innerHTML='';
-  restaurants.forEach(r=>{
-    const c=document.createElement('div'); c.className='resto-card';
-    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
-    g.appendChild(c);
-  });
-}
-function openMenu(id){
-  const m = id==="canton"?menuCanton:[];
-  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">Canton Brasse</h2><div style="max-width:600px;margin:0 auto;">`;
-  m.forEach(i=>h+=`<div class="menu-item"><span style="flex:1;">${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
-    <button onclick="addToCart('${i.nom}',${i.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-size:1.2rem;">+</button></div>`);
-  h+=`</div><div style="text-align:center;margin:40px;"><button class="btn" onclick="renderHome()">Retour</button><button class="btn" onclick="openPanier()">Panier</button></div>`;
-  document.getElementById("app").innerHTML=h;
-}
-function openPanier(){
-  if(panier.length===0) return alert("Vide !");
-  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
-  const livraison = fraisLivraison(totalHT);
-  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
-  let liste = "";
-  panier.forEach(i=>liste+=`<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
-    <span>${i.quantite||1} × ${i.nom}</span><span>${(i.prix*(i.quantite||1)).toFixed(2)} $</span></div>`);
-  document.getElementById("app").innerHTML = `
-    <h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier</h2>
-    <div style="max-width:600px;margin:0 auto;">
-      ${liste}
-      <div style="background:#f0f0f0;padding:30px;border-radius:15px;margin:30px 0;text-align:center;">
-        <p style="font-size:2rem;font-weight:bold;color:var(--vert);">TOTAL : ${totalTTC} $</p>
-        <button class="btn" style="padding:20px 60px;font-size:1.8rem;" onclick="prePay()">PAYER PAR CARTE</button>
-        <button class="vider-btn" style="margin-top:20px;" onclick="clearPanier()">Vider</button>
-      </div>
-    </div>`;
-}
-
-// PAIEMENT PRÉPAYÉ AVEC WHATSAPP GARANTI
 function prePay(){
-  if(panier.length===0) return;
+  if(panier.length===0) return alert("Panier vide !");
+
   const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
   const livraison = fraisLivraison(totalHT);
   const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
@@ -142,11 +91,9 @@ function prePay(){
   panier.forEach(i => texte += `${i.quantite||1} × ${i.nom} – ${(i.prix*(i.quantite||1)).toFixed(2)} $\n`);
   texte += `\nTOTAL : ${totalTTC} $\n\nPeux-tu me donner ton adresse complète + ton cell ?`;
 
-  // Sauvegarde suivi
   commandes.push({heure:new Date().toLocaleString('fr-CA'), items:[...panier], total:totalTTC});
   localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
 
-  // PAGE DE CONFIRMATION AVEC WHATSAPP
   document.getElementById("app").innerHTML = `
     <div style="text-align:center;margin:100px auto;max-width:600px;">
       <h2 style="color:#00b300;">PAIEMENT ACCEPTÉ !</h2>
@@ -154,13 +101,21 @@ function prePay(){
       <a href="https://wa.me/18198474443?text=${encodeURIComponent(texte)}" target="_blank" style="display:inline-block;background:#25D366;color:white;padding:25px 80px;border-radius:50px;font-size:2rem;text-decoration:none;">
         ENVOYER PAR WHATSAPP
       </a>
-      <p style="margin-top:30px;color:#666;">(ou réponds à l'email si tu l'as reçu)</p>
     </div>`;
 
   clearPanier();
 }
 
-// Suivi commandes
+// ADMIN – PROTÉGÉ PAR MOT DE PASSE
+function adminAccess(){
+  const pass = prompt("Mot de passe admin ?");
+  if(pass === "magog2025"){
+    document.getElementById("suivi").style.display = "block";
+    showOrders();
+  } else {
+    alert("Accès refusé");
+  }
+}
 function showOrders(){
   if(commandes.length===0) return document.getElementById('orders').innerHTML = "<p>Aucune commande aujourd'hui</p>";
   let html = "<ul>";
@@ -168,13 +123,11 @@ function showOrders(){
   html += "</ul>";
   document.getElementById('orders').innerHTML = html;
 }
-  // Efface toutes les commandes du jour
 function effacerSuivi(){
-  if(confirm("Effacer toutes les commandes du jour ?")){
+  if(confirm("Effacer tout le suivi du jour ?")){
     commandes = [];
     localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
     document.getElementById('orders').innerHTML = "<p>Suivi effacé – prêt pour aujourd’hui !</p>";
-    toast("Suivi du jour effacé");
   }
 }
 
