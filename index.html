@@ -50,6 +50,9 @@
 <div class="suivi">
   <h2>Ton suivi de commandes du jour</h2>
   <button onclick="showOrders()">Voir les commandes</button>
+  <button onclick="effacerSuivi()" style="background:#d32f2f;color:white;padding:12px 20px;border:none;border-radius:30px;margin-left:15px;cursor:pointer;">
+  Effacer le suivi du jour
+</button>
   <div id="orders"></div>
 </div>
 
@@ -164,6 +167,15 @@ function showOrders(){
   commandes.forEach(c => html += `<li><strong>${c.heure}</strong> – ${c.items.map(i=>i.nom).join(', ')} – ${c.total} $</li>`);
   html += "</ul>";
   document.getElementById('orders').innerHTML = html;
+}
+  // Efface toutes les commandes du jour
+function effacerSuivi(){
+  if(confirm("Effacer toutes les commandes du jour ?")){
+    commandes = [];
+    localStorage.setItem('commandesDuJour', JSON.stringify(commandes));
+    document.getElementById('orders').innerHTML = "<p>Suivi effacé – prêt pour aujourd’hui !</p>";
+    toast("Suivi du jour effacé");
+  }
 }
 
 // Démarrage
