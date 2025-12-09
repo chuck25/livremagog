@@ -1,5 +1,17 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Confidentialité – Livré Magog</title><style>body{font-family:Arial;background:#f5f5f5;padding:40px;text-align:center;}h1{color:#003366;}p{max-width:800px;margin:20px auto;line-height:1.6;}</style></head><body>
-<h1>Politique de confidentialité</h1>
-<p>Nous ne conservons que ton adresse et ton numéro pour la livraison du jour. Aucune donnée bancaire n’est stockée. Les données sont supprimées après la livraison.</p>
-<p><a href="/">← Retour au site</a></p>
-</body></html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Confidentialité – Livré Magog</title>
+  <style>
+    body{font-family:Arial;background:#f5f5f5;padding:80px;text-align:center;}
+    h1{color:#003366;}
+    p{max-width:800px;margin:20px auto;line-height:1.6;}
+  </style>
+</head>
+<body>
+  <h1>Politique de confidentialité</h1>
+  <p>Nous ne conservons aucune donnée de carte bancaire. Votre adresse et numéro de téléphone sont supprimés après la livraison.</p>
+  <p><a href="/">← Retour au site</a></p>
+</body>
+</html>
