@@ -197,13 +197,27 @@ updatePanierCount();
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
-import { db } from './firebase-config.js';
 
+// Config Firebase directement ici
+const firebaseConfig = {
+  apiKey: "AIzaSyDTSla_VMUOkXQyTYEQi6yWKCVqY8toRKE",
+  authDomain: "livre-magog.firebaseapp.com",
+  projectId: "livre-magog",
+  storageBucket: "livre-magog.firebasestorage.app",
+  messagingSenderId: "321783745514",
+  appId: "1:321783745514:web:0f040b4b15288908830093"
+};
+
+// Initialisation
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Test simple
 async function testFirebase() {
   try {
     const snapshot = await getDocs(collection(db, "commandes"));
-    console.log("Commandes :", snapshot.docs.map(d => d.data()));
-    alert("Firebase OK !");
+    console.log(snapshot.docs.map(d => d.data()));
+    alert("Connexion Firebase OK !");
   } catch(e) {
     console.error(e);
     alert("Erreur Firebase : " + e.message);
