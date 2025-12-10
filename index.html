@@ -189,5 +189,28 @@ function effacerSuivi(){
 renderHome();
 updatePanierCount();
 </script-->>
+  <script>
+ // Restaurants & menus
+const restaurants = [
+  {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
+  {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
+  {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
+];
+    
+function renderRestos(){
+  const g=document.getElementById('restoGrid'); g.innerHTML='';
+  restaurants.forEach(r=>{
+  const c=document.createElement('div'); c.className='resto-card';
+  c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
+  g.appendChild(c);
+  });
+function openMenu(id){
+  const m = menus[id] || [];
+  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">${restaurants.find(r=>r.id===id).nom}</h2><div style="max-width:600px;margin:0 auto;">`;
+  m.forEach(i=>h+=`<div class="menu-item"><span style="flex:1;">${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
+  document.getElementById("app").innerHTML=h;
+}
+  
+  </script>
 </body>
 </html>
