@@ -89,6 +89,25 @@
   };
 
   // ... Tout ton JS existant pour panier, Stripe, admin, etc. ...
+
+ <script type="module">
+import { db } from './firebase-config.js';
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+
+async function testFirebase() {
+  try {
+    const snapshot = await getDocs(collection(db, "commandes"));
+    console.log(snapshot.docs.map(d => d.data()));
+    alert("Connexion Firebase OK !");
+  } catch(e) {
+    console.error(e);
+    alert("Erreur Firebase : " + e.message);
+  }
+}
+
+testFirebase();
+</script>
+ 
 </script>
 </body>
 </html>
