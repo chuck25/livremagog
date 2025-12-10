@@ -195,21 +195,22 @@ updatePanierCount();
 </script>
   
   <script type="module">
-  import { db } from './firebase-config.js';
-  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import { db } from './firebase-config.js';
 
-  async function testFirebase() {
-    try {
-      const querySnapshot = await getDocs(collection(db, "commandes"));
-      console.log("Commandes actuelles :", querySnapshot.docs.map(doc => doc.data()));
-      alert("Connexion Firebase réussie !");
-    } catch (e) {
-      console.error(e);
-      alert("Erreur Firebase : " + e.message);
-    }
+async function testFirebase() {
+  try {
+    const snapshot = await getDocs(collection(db, "commandes"));
+    console.log("Commandes :", snapshot.docs.map(d => d.data()));
+    alert("Firebase OK !");
+  } catch(e) {
+    console.error(e);
+    alert("Erreur Firebase : " + e.message);
   }
+}
 
-  testFirebase();
+testFirebase();
 </script>
 
 </body>
