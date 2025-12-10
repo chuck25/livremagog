@@ -1,1 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Firebase – Livré Magog</title>
+</head>
+<body>
+  <h1>Test Firebase</h1>
+  <p>Ouvre la console pour voir les résultats.</p>
+
+  <script type="module">
+    // On importe Firebase et Firestore depuis ton firebase-config
+    import { db } from './firebase-config.js';
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+
+    async function testFirebase() {
+      try {
+        // On récupère tous les documents de la collection "commandes"
+        const snapshot = await getDocs(collection(db, "commandes"));
+
+        if (snapshot.empty) {
+          console.log("Aucun document trouvé dans la collection 'commandes'.");
+          alert("Collection vide ! Vérifie que tu as bien créé un document.");
+          return;
+        }
+
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Documents récupérés :", data);
+        alert("Connexion Firebase OK ! Regarde la console pour les documents.");
+      } catch (e) {
+        console.error("Erreur Firebase :", e);
+        alert("Erreur Firebase : " + e.message);
+      }
+    }
+
+    testFirebase();
+  </script>
+</body>
+</html>
 
