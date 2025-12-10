@@ -9,7 +9,6 @@ const firebaseConfig = {
   storageBucket: "livre-magog.firebasestorage.app,
   messagingSenderId: 321783745514",
   appId: "1:321783745514:web:0f040b4b15288908830093",
-  measurementId: "G-2YBD9NJ8Q5"
 };
 
 const app = initializeApp(firebaseConfig);
