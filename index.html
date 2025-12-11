@@ -1,194 +1,43 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Livré Magog – Livraison express</title>
-<script src="https://js.stripe.com/v3/"></script>
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-  // Config Firebase
-  const firebaseConfig = {
-    apiKey: "TA_API_KEY",
-    authDomain: "livre-magog.firebaseapp.com",
-    projectId: "livre-magog",
-    storageBucket: "livre-magog.appspot.com",
-    messagingSenderId: "TON_ID",
-    appId: "TON_APP_ID"
-  };
-
-  // Initialisation Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Fonction pour ajouter une commande
-  window.ajouterCommande = async function(commande){
-    try {
-      const docRef = await addDoc(collection(db, "commandes"), commande);
-      console.log("Commande ajoutée avec ID : ", docRef.id);
-    } catch (e) {
-      console.error("Erreur ajout commande : ", e);
-    }
-  };
-</script>
-
-<style>
-  :root{--bleu:#003366;--jaune:#ffcc00;--vert:#00b300;--rouge:#d32f2f;}
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
-  body{background:#f8f9fa;color:#333;}
-  header{background:var(--bleu);color:white;padding:1rem;text-align:center;position:fixed;width:100%;top:0;z-index:100;}
-  header h1{font-size:2rem;}
-  #app{padding-top:90px;}
-  .hero{background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6)),url('https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=1200') center/cover;color:white;text-align:center;padding:120px 20px 80px;}
-  .hero h2{font-size:2.5rem;margin-bottom:1rem;}
-  .hero p{font-size:1.3rem;margin-bottom:2rem;}
-  .btn{background:var(--jaune);color:var(--bleu);padding:15px 30px;border:none;border-radius:50px;font-size:1.3rem;font-weight:bold;cursor:pointer;}
-  .btn:hover{background:#ffd633;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:30px;padding:20px;}
-  .resto-card{background:white;border-radius:15px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.1);text-align:center;padding:20px;transition:0.3s;}
-  .resto-card:hover{transform:translateY(-10px);}
-  .resto-card img{width:100%;height:200px;object-fit:cover;border-radius:10px;}
-  .panier{position:fixed;bottom:20px;right:20px;background:var(--bleu);color:white;padding:15px 25px;border-radius:50px;box-shadow:0 10px 30px rgba(0,0,0,0.4);cursor:pointer;z-index:999;font-weight:bold;display:flex;align-items:center;gap:12px;}
-  .panier span{background:var(--jaune);color:var(--bleu);border-radius:50%;padding:6px 12px;font-weight:bold;}
-  #toast{position:fixed;bottom:90px;right:20px;background:#333;color:white;padding:15px 25px;border-radius:10px;z-index:1000;opacity:0;transition:opacity 0.4s;}
-  #toast.show{opacity:1;}
-  .vider-btn{background:var(--rouge);color:white;padding:12px 25px;border:none;border-radius:30px;cursor:pointer;font-weight:bold;}
-  .menu-item{display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;margin:10px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-  .bandeau{background:#d32f2f;color:white;text-align:center;padding:12px;font-weight:bold;position:fixed;top:60px;width:100%;z-index:999;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livré Magog – Livraison express</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="firebase-config.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="bandeau">OUVERT VENDREDI & SAMEDI 17h-22h30 – Livraison 3,99 $</div>
+<div class="bandeau">
+  OUVERT VENDREDI & SAMEDI 17h-22h30 – Livraison 3,99 $
+</div>
+
 <header><h1>Livré Magog</h1></header>
 <div id="app"></div>
 <div class="panier" onclick="openPanier()">Panier <span id="panierCount">0</span></div>
 <div id="toast"></div>
 
-<footer style="margin-top:80px;padding:30px;background:#003366;color:white;text-align:center;font-size:0.9rem;">
+<div style="text-align:center;margin:40px;">
+  <button onclick="adminAccess()" class="btn-admin">Admin (toi seulement)</button>
+</div>
+
+<div class="suivi" id="suivi">
+  <h2>Suivi commandes du jour</h2>
+  <button onclick="showOrders()">Voir</button>
+  <button onclick="effacerSuivi()" class="btn-effacer">Effacer</button>
+  <div id="orders"></div>
+</div>
+
+<footer>
   <p><strong>Livré Magog – Charles Lepage</strong></p>
   <p>NEQ : [à remplir]</p>
   <p>Magog (QC) – 819-847-4443</p>
 </footer>
 
-<script>
-let panier = JSON.parse(localStorage.getItem('panier')) || [];
-
-const stripe = Stripe('pk_test_51SanAQEeNVdROugjrFHqlkGYVR3qQeDPT0a0X23gAjPHYDBvszs6ArDueXe4r8wgwyYomUhKjnnzBFD7b0ol26qV00zSrTaCu6');
-
-const restaurants = [
-  {nom:"Canton Brasse",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",id:"canton"},
-  {nom:"La Memphré",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",id:"memphre"},
-  {nom:"Pizzeria Magog",img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",id:"pizza"}
-];
-
-const menus = {
-  canton: [{nom:"Poutine classique",prix:14.99},{nom:"Burger Canton",prix:18.99},{nom:"Fish & Chips",prix:19.99}],
-  memphre: [{nom:"Salade César",prix:12.99},{nom:"Sandwich au poulet",prix:14.99},{nom:"Soupe du jour",prix:9.99}],
-  pizza: [{nom:"Pizza Margherita",prix:15.99},{nom:"Pizza Pepperoni",prix:17.99},{nom:"Calzone",prix:16.99}]
-};
-
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
-function updatePanierCount(){document.getElementById('panierCount').textContent=panier.reduce((s,i)=>s+(i.quantite||1),0);}
-function addToCart(nom,prix){let item=panier.find(i=>i.nom===nom);if(item)item.quantite+=1;else panier.push({nom,prix,quantite:1});localStorage.setItem('panier',JSON.stringify(panier));updatePanierCount();showToast(`${nom} ajouté`);}
-function clearPanier(){panier=[];localStorage.removeItem('panier');updatePanierCount();}
-function fraisLivraison(t){return t>=100?0:t>=50?2.99:3.99;}
-
-function renderHome(){
-  document.getElementById("app").innerHTML = `
-    <section class="hero"><h2>Livraison express à Magog</h2><p>Frais fixes 3,99 $ • 25-35 min</p></section>
-    <section><h2 style="text-align:center;margin-bottom:30px;color:var(--bleu);">Restaurants</h2><div class="grid" id="restoGrid"></div></section>`;
-  renderRestos();
-}
-
-function renderRestos(){
-  const g=document.getElementById('restoGrid'); g.innerHTML='';
-  restaurants.forEach(r=>{
-    const c=document.createElement('div'); c.className='resto-card';
-    c.innerHTML=`<img src="${r.img}" alt="${r.nom}"><h3>${r.nom}</h3><button class="btn" onclick="openMenu('${r.id}')">Menu</button>`;
-    g.appendChild(c);
-  });
-}
-
-function openMenu(id){
-  const m = menus[id] || [];
-  let h=`<h2 style="text-align:center;color:var(--bleu);margin:30px;">${restaurants.find(r=>r.id===id).nom}</h2><div style="max-width:600px;margin:0 auto;">`;
-  m.forEach(i=>h+=`<div class="menu-item"><span style="flex:1;">${i.nom}</span><span>${i.prix.toFixed(2)} $</span>
-    <button onclick="addToCart('${i.nom}',${i.prix})" style="background:var(--jaune);color:var(--bleu);border:none;padding:10px 18px;border-radius:50%;margin-left:15px;font-size:1.2rem;">+</button></div>`);
-  h+=`</div><div style="text-align:center;margin:40px;"><button class="btn" onclick="renderHome()">Retour</button><button class="btn" onclick="openPanier()">Panier</button></div>`;
-  document.getElementById("app").innerHTML=h;
-}
-
-function openPanier(){
-  if(panier.length===0) return alert("Vide !");
-  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
-  const livraison = fraisLivraison(totalHT);
-  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
-  let liste = "";
-  panier.forEach(i=>liste+=`<div style="display:flex;justify-content:space-between;padding:15px;background:white;margin:10px 0;border-radius:10px;">
-    <span>${i.quantite||1} × ${i.nom}</span><span>${(i.prix*(i.quantite||1)).toFixed(2)} $</span></div>`);
-  document.getElementById("app").innerHTML = `
-    <h2 style="text-align:center;color:var(--bleu);margin:30px;">Ton panier</h2>
-    <div style="max-width:600px;margin:0 auto;">
-      ${liste}
-      <div style="background:#f0f0f0;padding:30px;border-radius:15px;text-align:center;">
-        <p style="font-size:2rem;font-weight:bold;color:var(--vert);">TOTAL : ${totalTTC} $</p>
-        <button class="btn" style="padding:20px 60px;font-size:1.8rem;" onclick="prePay()">PAYER PAR CARTE</button>
-        <button class="vider-btn" style="margin-top:20px;" onclick="clearPanier()">Vider</button>
-      </div>
-    </div>`;
-}
-
-function prePay(){
-  if(panier.length===0) return;
-
-  const totalHT = panier.reduce((s,i)=>s+(i.prix*(i.quantite||1)),0);
-  const livraison = fraisLivraison(totalHT);
-  const totalTTC = (totalHT*1.12 + livraison).toFixed(2);
-
-  // Enregistrer dans Firebase avant Stripe
-  ajouterCommande({
-    items: panier,
-    total: totalTTC,
-    date: new Date().toISOString()
-  });
-
-  // Stripe Checkout
-  const lineItems = panier.map(i=>({
-    price_data:{
-      currency:'cad',
-      product_data:{name:i.nom + (i.quantite>1 ? ` ×${i.quantite}` : '')},
-      unit_amount: Math.round(i.prix*100)
-    },
-    quantity:1
-  }));
-  if(livraison>0) lineItems.push({
-    price_data:{
-      currency:'cad',
-      product_data:{name:'Livraison'},
-      unit_amount: Math.round(livraison*100)
-    },
-    quantity:1
-  });
-
-  stripe.redirectToCheckout({
-    lineItems: lineItems,
-    mode:'payment',
-    successUrl:window.location.origin+'?success=1',
-    cancelUrl:window.location.origin,
-    billingAddressCollection:'required',
-    shippingAddressCollection:{allowedCountries:['CA']},
-    locale:'fr'
-  }).then(r=>{if(r.error) showToast(r.error.message);});
-}
-
-// Démarrage
-renderHome();
-updatePanierCount();
-</script>
+<script src="script.js"></script>
 </body>
 </html>
+
 
