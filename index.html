@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livré Magog - Test Stripe</title>
+<script src="script.js"></script>
+<style>
+body{font-family:sans-serif;text-align:center;margin-top:50px;}
+button{padding:15px 30px;font-size:1.2rem;cursor:pointer;background:#ffcc00;border:none;border-radius:10px;}
+</style>
+</head>
+<body>
+
+<h1>Test Stripe</h1>
+<p>Panier test :</p>
+<ul>
+    <li>Poutine classique - 14.99 $</li>
+</ul>
+<button id="payBtn">Payer par carte</button>
+
+<script>
+const stripe = Stripe('pk_test_51SanA8Eb1K9QFuekWNl8nlH9g6OKaRdSMhHq3O1B028Trbef3q4gotXN9Ra2K0hHXpYZpdffee4hLgdvEemoU6pg00QJqRLFa3');
+
+document.getElementById('payBtn').addEventListener('click', async () => {
+    const panier = [{ nom: "Poutine classique", prix: 14.99, quantite: 1 }];
+
+    try {
+        const res = fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: panier })
+        });
+
+        const data = await res.json();
+        if(data.id) {
+            stripe.redirectToCheckout({ sessionId: data.id });
+        }
+    } catch(err) {
+        console.error(err);
+        alert('Erreur lors de la création de la session');
+    }
+});
+</script>
+
+</body>
+</html>
