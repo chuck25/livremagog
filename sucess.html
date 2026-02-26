@@ -2,20 +2,70 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Paiement réussi – Livré Magog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paiement confirmé — Livré Magog</title>
   <style>
-    body{font-family:Arial,sans-serif;background:#f8f9fa;text-align:center;padding:80px 20px;}
-    .box{background:#fff;max-width:520px;margin:0 auto;padding:30px;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.12);}
-    h1{color:#00b300;margin:0 0 10px;}
-    a{display:inline-block;margin-top:18px;background:#ffcc00;color:#003366;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:12px;}
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 16px; }
+    .card { padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+    .ok { color: #1a7f37; }
+    .warn { color: #b54708; }
+    .muted { color: #666; font-size: 14px; }
+    button { padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>✅ Paiement réussi !</h1>
-    <p>Merci 🙌 Ta commande est confirmée.</p>
-    <a href="/">Retour à l’accueil</a>
+  <h1>✅ Paiement</h1>
+
+  <div class="card">
+    <p id="status" class="muted">Vérification du paiement en cours...</p>
+    <p id="details" class="muted"></p>
+
+    <button onclick="location.href='index.html'">Retour à l’accueil</button>
   </div>
+
+  <script>
+    const BACKEND_URL = "https://livremagog-backend.vercel.app";
+    const CART_KEY = "cart";
+
+    function clearCart() {
+      localStorage.removeItem(CART_KEY);
+    }
+
+    async function verify() {
+      const params = new URLSearchParams(location.search);
+      const sessionId = params.get("session_id");
+
+      const statusEl = document.getElementById("status");
+      const detailsEl = document.getElementById("details");
+
+      if (!sessionId) {
+        statusEl.textContent = "Session Stripe manquante. Si tu as payé, contacte le support.";
+        statusEl.className = "warn";
+        return;
+      }
+
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/verify-session?session_id=${encodeURIComponent(sessionId)}`);
+        const data = await r.json();
+
+        if (r.ok && data.paid) {
+          statusEl.textContent = "Paiement confirmé ✅ Merci !";
+          statusEl.className = "ok";
+          detailsEl.textContent = data.orderToken ? `Référence: ${data.orderToken}` : "";
+          clearCart(); // IMPORTANT: on vide seulement si paid
+        } else {
+          statusEl.textContent = "Paiement non confirmé (ou en attente).";
+          statusEl.className = "warn";
+          detailsEl.textContent = data.payment_status ? `Statut: ${data.payment_status}` : "";
+        }
+      } catch (e) {
+        statusEl.textContent = "Impossible de vérifier le paiement pour l’instant.";
+        statusEl.className = "warn";
+      }
+    }
+
+    verify();
+  </script>
 </body>
 </html>
+
