@@ -42,11 +42,13 @@ function addToCart(sku, qty = 1) {
 
   saveCart(cart);
   console.log("✅ Panier mis à jour:", cart);
+  updateCartBadge();
 }
 
 function clearCart() {
   localStorage.removeItem(CART_KEY);
   console.log("🧹 Panier vidé");
+  updateCartBadge();
 }
 
 /***********************
@@ -95,6 +97,16 @@ async function payNow() {
   }
 }
 
+function getCartCount() {
+  return getCart().reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+}
+
+function updateCartBadge() {
+  const badge = document.querySelector("#cartBadge");
+  if (!badge) return;
+  badge.textContent = `🛒 Panier (${getCartCount()})`;
+}
+
 /***********************
  * INIT
  ***********************/
@@ -111,6 +123,8 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("🖱️ Click sur Payer");
     payNow();
   });
-
+  updateCartBadge();
   console.log("🛒 Panier au chargement:", getCart());
+
 });
+
